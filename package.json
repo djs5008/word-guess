@@ -1,0 +1,29 @@
+{
+  "name": "word-guess",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Guess a word game",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djs5008/word-guess.git"
+  },
+  "author": "Dan Schmitt (djs5008@rit.edu)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/djs5008/word-guess/issues"
+  },
+  "homepage": "https://github.com/djs5008/word-guess#readme",
+  "dependencies": {
+    "@material-ui/core": "^1.0.0-rc.1",
+    "react": "^16.3.2",
+    "react-dom": "^16.3.2",
+    "react-scripts": "1.1.4"
+  }
+}
