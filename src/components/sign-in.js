@@ -15,10 +15,11 @@ const styles = theme => ({
   },
   modal: {
     display: 'flex',
+    'align-items': 'center',
     justifyContent: 'center'
   },
   button: {
-    "margin-top": 5,
+    'margin-top': 15,
   },
   textfield: {
     width: `100%`,
@@ -26,51 +27,71 @@ const styles = theme => ({
 });
 
 class SignIn extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      username: '',
+      signedIn: false,
+    };
+  }
   
-  setSignedIn(signedIn) {
-    this.signedIn = signedIn;
+  setSignedIn(status) {
+    this.setState({
+      signedIn: status
+    });
   }
 
   checkValidUsername() {
-    const username = this.usernameField.value;
-    return username.matches('Aa-Zz0-9');
+      return this.state.username.match('^[A-Za-z0-9]+$');
   }
 
   render() {
     const { classes } = this.props;
     return (
       <Modal
-        aria-labelledby="simple-modal-title"
-        aria-describedby="simple-modal-description"
-        open={!this.signedIn}
-        onClose={this.setSignedIn(true)}
+        aria-labelledby='simple-modal-title'
+        aria-describedby='simple-modal-description'
+        open={!this.state.signedIn}
         className={classes.modal}
       >
         <div className={classes.paper}>
-          <Typography variant="title" id="modal-title">
+          <Typography variant='title' id='modal-title'>
             Sign-In to Word Guesser!
           </Typography>
-          <Typography variant="caption" id="simple-modal-description">
+          <Typography variant='caption' id='simple-modal-description'>
             Enter a valid username below (alphanumeric)
           </Typography>
           <TextField
-            id="usernameField"
+            id='username-field'
             inputRef={(input) => this.usernameField = input}
             className={classes.textfield}
-            type="text"
+            type='text'
+            error={!this.checkValidUsername()}
             autoFocus={true}
             required={true}
-            helperText="USERNAME"
+            helperText='USERNAME'
+            onKeyPress={(evt) => {
+              if (evt.key === 'Enter') {
+                if (this.checkValidUsername()) {
+                  this.signinButton.click();
+                }
+              }
+            }}
+            onChange={(evt) => this.setState({
+              username: this.usernameField.value,
+            })}
           >
           </TextField>
           <Button 
+            id='signin-button'
             className={classes.button}
             fullWidth={true}
-            variant="raised"
-            color="primary"
-            //disabled={this.checkValidUsername()}
+            variant='raised'
+            color='primary'
+            buttonRef={(button) => this.signinButton = button}
+            disabled={!this.checkValidUsername()}
             onClick={() => {
-              //alert(this.refs.usernameField.value);
               this.setSignedIn(true);
             }}
           >
