@@ -1,12 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Modal from '@material-ui/core/Modal';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox'
-import Divider from '@material-ui/core/Divider'
-import Grid from '@material-ui/core/Grid'
+import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {

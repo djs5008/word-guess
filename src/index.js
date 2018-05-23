@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import registerServiceWorker from './registerServiceWorker';
-import SignIn from './components/sign-in.js';
-import MainMenu from './components/menu.js';
-import 'bootstrap/dist/css/bootstrap.css';
-import './index.css';
+import registerServiceWorker from './js/registerServiceWorker';
+import SignIn from './components/sign-in';
+import MainMenu from './components/menu';
 import uuid from 'uuid/v4'
+import 'bootstrap/dist/css/bootstrap.css';
+import './css/index.css';
 
 class App extends Component {
 
@@ -20,7 +20,7 @@ class App extends Component {
   }
 
   setUserProps(name) {
-    const userID = uuid().toString().replace('-', '');
+    const userID = uuid().toString().replace(/-/g, '');
     sessionStorage.setItem('username', name);
     sessionStorage.setItem('userID', userID);
     this.setState({

@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Modal from '@material-ui/core/Modal';
-import TextField from '@material-ui/core/TextField';
-import Button from '@material-ui/core/Button';
+import { Typography, Modal, TextField, Button } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {

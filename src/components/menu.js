@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import CreateMenu from './create-menu.js';
-import JoinMenu from './join-menu.js';
-import { Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
+import { Typography, Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
+import CreateMenu from './create-menu';
+import JoinMenu from './join-menu';
 
 const styles = theme => ({
   button: {
@@ -146,7 +145,7 @@ class MainMenu extends Component {
           message={
             <div>
               <Typography variant='body2' className={classes.createButton}>
-                Signed in as "{this.props.username}"!
+                Signed in as '{this.props.username}'!
               </Typography>
               <Typography variant='caption'>
                 user id: {this.props.userID}

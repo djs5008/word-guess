@@ -119,8 +119,10 @@ class Lobby extends Component {
                   buttonDown: true,
                   typing: (this.state.privateLobby) ? true : false,
                 });
-                if (this.state.privateLobby) {
+                if (this.state.privateLobby && !this.state.typing) {
                   setTimeout(() => this.password.focus(), 0);
+                } else {
+                  this.props.closeMenu();
                 }
               }}
               onMouseUp={

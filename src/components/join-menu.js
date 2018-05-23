@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Modal from '@material-ui/core/Modal';
-import Divider from '@material-ui/core/Divider'
+import { List, ListItem, Typography, Modal, Divider } from '@material-ui/core';
 import Lobby from './lobby';
-import { List, ListItem } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {
@@ -63,8 +60,8 @@ class JoinMenu extends Component {
     let items = [];
     for (let i = 0; i < 5; i++) {
       items.push(
-        <ListItem key={i} className={classes.lobby} closeMenu={this.closeMenu}>
-          <Lobby />
+        <ListItem key={i} className={classes.lobby}>
+          <Lobby closeMenu={this.closeMenu} />
         </ListItem>
       );
     }
