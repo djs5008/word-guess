@@ -55,6 +55,38 @@ class Lobby extends Component {
     return this.state.playerCount >= this.state.maxPlayers;
   }
 
+  isButtonDisabled() {
+    return this.isLobbyFull() 
+      || (this.state.privateLobby && this.state.typing && this.state.password === '');
+  }
+
+  isTyping() {
+    return this.password.focused || this.joinButton.focused
+  }
+
+  componentWillMount() {
+    this.handleButtonDown = this.handleButtonDown.bind(this);
+    this.handleButtonUp = this.handleButtonUp.bind(this);
+  }
+
+  handleButtonDown() {
+    this.setState({
+      buttonDown: true,
+      typing: (this.state.privateLobby) ? true : false,
+    });
+    if (this.state.privateLobby && !this.state.typing) {
+      setTimeout(() => this.password.focus(), 0);
+    } else {
+      this.props.closeMenu();
+    }
+  }
+
+  handleButtonUp() {
+    this.setState({
+      buttonDown: false,
+    });
+  }
+
   render() {
     const { classes } = this.props;
     return(
@@ -77,8 +109,8 @@ class Lobby extends Component {
                   id='password-field'
                   className={classes.passwordField}
                   inputRef={(input) => this.password = input}
-                  error={this.password === ''}
-                  required={true}
+                  required
+                  error={this.state.password === ''}
                   placeholder='Lobby Password'
                   disabled={!this.state.typing}
                   onChange={
@@ -98,7 +130,7 @@ class Lobby extends Component {
                   }
                   onBlur={(evt) => {
                     this.setState({
-                      typing: this.state.buttonDown,
+                      typing: this.isTyping(),
                       buttonColor: 'secondary',
                       buttonIcon: 'lock',
                     });
@@ -111,27 +143,11 @@ class Lobby extends Component {
             <Button
               variant='raised'
               color={this.state.buttonColor}
-              disabled={this.isLobbyFull()}
+              disabled={this.isButtonDisabled()}
               className={classes.button}
               buttonRef={(button) => this.joinButton = button}
-              onMouseDown={(evt) => {
-                this.setState({
-                  buttonDown: true,
-                  typing: (this.state.privateLobby) ? true : false,
-                });
-                if (this.state.privateLobby && !this.state.typing) {
-                  setTimeout(() => this.password.focus(), 0);
-                } else {
-                  this.props.closeMenu();
-                }
-              }}
-              onMouseUp={
-                (evt) => {
-                  this.setState({
-                    buttonDown: false,
-                  });
-                }
-              }
+              onMouseDown={this.handleButtonDown}
+              onMouseUp={this.handleButtonUp}
             >
               <Icon>{this.state.buttonIcon}</Icon>
             </Button>

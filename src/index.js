@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import registerServiceWorker from './js/registerServiceWorker';
-import SignIn from './components/sign-in';
-import MainMenu from './components/menu';
+import SignIn from './js/components/sign-in';
+import MainMenu from './js/components/menu';
 import uuid from 'uuid/v4'
 import 'bootstrap/dist/css/bootstrap.css';
 import './css/index.css';

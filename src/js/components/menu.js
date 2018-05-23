@@ -85,51 +85,53 @@ class MainMenu extends Component {
             </Typography>
           </Slide>
           <Slide direction='up' in={this.showMenu()} timeout={this.state.slideSpeed}>
-            <Grid container spacing={8} justify='center' direction='column'>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-              </Hidden>
-              <Grid item md={2} xs={6} zeroMinWidth>
-                <Button 
-                  variant='raised'
-                  color='primary'
-                  className={classes.button}
-                  fullWidth
-                  size='medium'
-                  onClick={(evt) => this.setState({
-                    creating: true,
-                  })}
-                >
-                  <Typography variant='title' className={classes.createButton}>
-                    Create Game&nbsp;
-                    <Icon className={classes.iconAlign}>create</Icon>
-                  </Typography>
-                </Button>
+            <div>
+              <Grid container spacing={8} justify='center'>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                </Hidden>
+                <Grid item md={3} lg={2} xs={6} zeroMinWidth>
+                  <Button 
+                    variant='raised'
+                    color='primary'
+                    className={classes.button}
+                    fullWidth
+                    size='medium'
+                    onClick={(evt) => this.setState({
+                      creating: true,
+                    })}
+                  >
+                    <Typography variant='title' className={classes.createButton}>
+                      Create Game&nbsp;
+                      <Icon className={classes.iconAlign}>create</Icon>
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                  <Grid item xs={3} />
+                </Hidden>
+                <Grid item md={3} lg={2} xs={6} zeroMinWidth>
+                  <Button 
+                    variant='raised'
+                    className={classes.button}
+                    fullWidth
+                    size='medium'
+                    onClick={(evt) => this.setState({
+                      joining: true,
+                    })}
+                  >
+                    <Typography variant='title' className={classes.joinButton}>
+                      Join Game&nbsp;
+                      <Icon className={classes.iconAlign}>send</Icon>
+                    </Typography>              
+                  </Button>
+                </Grid>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                </Hidden>
               </Grid>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-                <Grid item xs={3} />
-              </Hidden>
-              <Grid item md={2} xs={6} zeroMinWidth>
-                <Button 
-                  variant='raised'
-                  className={classes.button}
-                  fullWidth
-                  size='medium'
-                  onClick={(evt) => this.setState({
-                    joining: true,
-                  })}
-                >
-                  <Typography variant='title' className={classes.joinButton}>
-                    Join Game&nbsp;
-                    <Icon className={classes.iconAlign}>send</Icon>
-                  </Typography>              
-                </Button>
-              </Grid>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-              </Hidden>
-            </Grid>
+            </div>
           </Slide>
         </Grid>
         <Snackbar 
