@@ -31,19 +31,23 @@ class SignIn extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      shown: props.shown,
       username: '',
-      signedIn: false,
     };
+  }
+
+  componentWillReceiveProps(props) {
+    this.setState({
+      shown: props.shown,
+    });
   }
   
   setSignedIn(status) {
-    this.setState({
-      signedIn: status
-    });
+    this.props.setUserProps(this.state.username);
   }
 
   checkValidUsername() {
-      return this.state.username.match('^[A-Za-z0-9]+$');
+    return this.state.username.match('^[A-Za-z0-9]+$');
   }
 
   render() {
@@ -52,7 +56,7 @@ class SignIn extends Component {
       <Modal
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
-        open={!this.state.signedIn}
+        open={this.state.shown}
         className={classes.modal}
       >
         <div className={classes.paper}>

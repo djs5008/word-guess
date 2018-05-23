@@ -6,7 +6,7 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox'
 import Divider from '@material-ui/core/Divider'
-import { Row,Col, } from 'reactstrap';
+import Grid from '@material-ui/core/Grid'
 
 const styles = theme => ({
   paper: {
@@ -68,7 +68,6 @@ class CreateMenu extends Component {
       && this.checkRounds(this.state.rounds)
       && this.checkPassword();
   }
-
 
   closeMenu() {
     this.setState({
@@ -149,8 +148,8 @@ class CreateMenu extends Component {
               }
             }
           />
-          <Row>
-            <Col xs='4' sm='4' md='4'>
+          <Grid container>
+            <Grid item xs={4}>
               <Checkbox
                 id='private-field'
                 required={true}
@@ -163,8 +162,8 @@ class CreateMenu extends Component {
               <Typography variant='caption' id='private-label' align='left'>
                 PRIVATE GAME?
               </Typography>
-            </Col>
-            <Col xs='8' sm='8' md='8'>
+            </Grid>
+            <Grid item xs={8}>
               <TextField
                 id='password-field'
                 inputRef={(input) => this.password = input}
@@ -183,8 +182,8 @@ class CreateMenu extends Component {
                   }
                 }
               />
-            </Col>
-          </Row>
+            </Grid>
+          </Grid>
           <br/>
           <Divider/>
           <Button 

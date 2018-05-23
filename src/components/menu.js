@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Slide from '@material-ui/core/Slide';
-import Button from '@material-ui/core/Button';
-import Icon from '@material-ui/core/Icon';
 import CreateMenu from './create-menu.js';
 import JoinMenu from './join-menu.js';
-import { Row,Col, } from 'reactstrap';
+import { Snackbar, IconButton, Icon, Grid, Slide, Button } from '@material-ui/core';
 
 const styles = theme => ({
   button: {
@@ -48,10 +45,11 @@ class MainMenu extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      shown: true,
+      shown: props.shown,
       creating: false,
       joining: false,
       slideSpeed: 300,
+      shownName: true,
     }
     this.resetMenu = this.resetMenu.bind(this);
   }
@@ -68,12 +66,18 @@ class MainMenu extends Component {
     });
   }
 
+  componentWillReceiveProps(props) {
+    this.setState({
+      shown: props.shown,
+    });
+  }
+
   render() {
     const { classes } = this.props;
     return(
       <div className='vignette'>
-        <Row>
-          <Col sm='12' md='12' lg='12' className={`text-center ${classes.verticalCenter}`}>
+        <Grid container justify='center'>
+          <Grid item xs={12} className={`text-center ${classes.verticalCenter}`}>
             <Slide direction='down' in={this.showMenu()} timeout={this.state.slideSpeed}>
               <Typography 
                 variant='display4' 
@@ -117,8 +121,42 @@ class MainMenu extends Component {
             </Slide>
             <CreateMenu creating={this.state.creating} resetMenu={this.resetMenu}/>
             <JoinMenu joining={this.state.joining} resetMenu={this.resetMenu}/>
-          </Col>
-        </Row>
+          </Grid>
+        </Grid>
+        <Snackbar 
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          open={this.props.username !== null && this.state.shownName}
+          autoHideDuration={6000}
+          onClose={(evt) => this.setState({
+            shownName: false,
+          })}
+          message={
+            <Typography variant='body2' className={classes.createButton}>
+              Signed in as "{this.props.username}"!
+            </Typography>
+          }
+          action={[
+            <Button key="undo" color="secondary" size="small" onClick={(evt) => this.props.signOut()}>
+              CHANGE
+            </Button>,
+            <IconButton
+              key="close"
+              aria-label="Close"
+              color="inherit"
+              className={classes.close}
+              onClick={(evt) => {
+                this.setState({
+                  shownName: false,
+                });
+              }}
+            >
+              <Icon>close</Icon>
+            </IconButton>,
+          ]}
+        />
       </div>
     );
   }

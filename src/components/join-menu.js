@@ -23,7 +23,8 @@ const styles = theme => ({
     'margin-top': 15,
   },
   scroll: {
-    overflow: 'auto',
+    overflowY: 'auto',
+    overflowX: 'hidden',
     maxHeight: 300,
     width: '100%',
   },
