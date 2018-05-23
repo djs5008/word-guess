@@ -61,7 +61,7 @@ class Lobby extends Component {
       <Paper className={classes.paper}>
         <Grid container className={classes.container}>
           <Grid item xs={10} className={classes.row}>
-            <Slide className={classes.content} in={!this.state.typing} direction='left' style={{width: '100%'}}>
+            <Slide appear={false} className={classes.content} in={!this.state.typing} direction='left' style={{width: '100%'}}>
               <div style={{visibility: this.state.typing ? 'hidden' : 'visible'}}>
                 <Typography align='left' variant='caption' id='simple-modal-description'>
                   Lobby: {this.state.name}

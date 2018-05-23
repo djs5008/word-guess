@@ -41,6 +41,7 @@ class JoinMenu extends Component {
     this.state = {
       joining: false,
     };
+    this.closeMenu = this.closeMenu.bind(this);
   }
 
   componentWillReceiveProps(props) {
@@ -62,7 +63,7 @@ class JoinMenu extends Component {
     let items = [];
     for (let i = 0; i < 5; i++) {
       items.push(
-        <ListItem key={i} className={classes.lobby}>
+        <ListItem key={i} className={classes.lobby} closeMenu={this.closeMenu}>
           <Lobby />
         </ListItem>
       );

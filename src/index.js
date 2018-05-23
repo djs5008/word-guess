@@ -5,6 +5,7 @@ import SignIn from './components/sign-in.js';
 import MainMenu from './components/menu.js';
 import 'bootstrap/dist/css/bootstrap.css';
 import './index.css';
+import uuid from 'uuid/v4'
 
 class App extends Component {
 
@@ -19,9 +20,12 @@ class App extends Component {
   }
 
   setUserProps(name) {
+    const userID = uuid().toString().replace('-', '');
     sessionStorage.setItem('username', name);
+    sessionStorage.setItem('userID', userID);
     this.setState({
       username: name,
+      userID: userID,
     });
   }
 
@@ -36,8 +40,8 @@ class App extends Component {
     console.log(this.state.username)
     return (
       <div>
-        <MainMenu shown={this.state.username !== null} username={this.state.username} signOut={this.signOut}/>
-        <SignIn shown={this.state.username === null} setUserProps={this.setUserProps}/>
+        <MainMenu shown={this.state.userID !== null} username={this.state.username} userID={this.state.userID} signOut={this.signOut}/>
+        <SignIn shown={this.state.userID === null} setUserProps={this.setUserProps}/>
       </div>
     );
   }
