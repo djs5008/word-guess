@@ -5,6 +5,7 @@ import Slide from '@material-ui/core/Slide';
 import Button from '@material-ui/core/Button';
 import Icon from '@material-ui/core/Icon';
 import CreateMenu from './create-menu.js';
+import JoinMenu from './join-menu.js';
 import { Row,Col, } from 'reactstrap';
 
 const styles = theme => ({
@@ -50,12 +51,13 @@ class MainMenu extends Component {
       shown: true,
       creating: false,
       joining: false,
+      slideSpeed: 300,
     }
     this.resetMenu = this.resetMenu.bind(this);
   }
 
   showMenu() {
-    return this.state.shown && !this.state.creating;
+    return this.state.shown && !this.state.creating && !this.state.joining;
   }
 
   resetMenu() {
@@ -72,7 +74,7 @@ class MainMenu extends Component {
       <div className='vignette'>
         <Row>
           <Col sm='12' md='12' lg='12' className={`text-center ${classes.verticalCenter}`}>
-            <Slide direction='down' in={this.showMenu()} timeout={300}>
+            <Slide direction='down' in={this.showMenu()} timeout={this.state.slideSpeed}>
               <Typography 
                 variant='display4' 
                 id='menu-title' 
@@ -81,12 +83,13 @@ class MainMenu extends Component {
                 Word Guesser!
               </Typography>
             </Slide>
-            <Slide direction='up' in={this.showMenu()} timeout={300}>
+            <Slide direction='up' in={this.showMenu()} timeout={this.state.slideSpeed}>
               <div>
                 <Button 
                   variant='raised'
                   color='primary'
                   className={classes.button}
+                  size='medium'
                   onClick={(evt) => this.setState({
                     creating: true,
                   })}
@@ -100,6 +103,10 @@ class MainMenu extends Component {
                 <Button 
                   variant='raised'
                   className={classes.button}
+                  size='medium'
+                  onClick={(evt) => this.setState({
+                    joining: true,
+                  })}
                 >
                   <Typography variant='title' className={classes.joinButton}>
                     Join Game&nbsp;
@@ -109,6 +116,7 @@ class MainMenu extends Component {
               </div>
             </Slide>
             <CreateMenu creating={this.state.creating} resetMenu={this.resetMenu}/>
+            <JoinMenu joining={this.state.joining} resetMenu={this.resetMenu}/>
           </Col>
         </Row>
       </div>
