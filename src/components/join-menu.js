@@ -3,7 +3,6 @@ import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import Modal from '@material-ui/core/Modal';
 import Divider from '@material-ui/core/Divider'
-import { Row, } from 'reactstrap';
 import Lobby from './lobby';
 import { List, ListItem } from '@material-ui/core';
 
@@ -28,6 +27,10 @@ const styles = theme => ({
     maxHeight: 300,
     width: '100%',
   },
+  lobby: {
+    paddingTop: 5,
+    paddingBottom: 5,
+  }
 });
 
 class JoinMenu extends Component {
@@ -58,7 +61,7 @@ class JoinMenu extends Component {
     let items = [];
     for (let i = 0; i < 5; i++) {
       items.push(
-        <ListItem key={i}>
+        <ListItem key={i} className={classes.lobby}>
           <Lobby />
         </ListItem>
       );
@@ -90,11 +93,7 @@ class JoinMenu extends Component {
           </Typography>
           <br/>
           <Divider/>
-          <Row>
-            <br/>
-            {this.getAvailableLobbies()}
-            <br/>
-          </Row>
+          {this.getAvailableLobbies()}
           <Divider/>
         </div>
       </Modal>

@@ -48,6 +48,7 @@ class Lobby extends Component {
       password: '',
       buttonColor: 'invalid',
       buttonIcon: 'invalid',
+      buttonDown: false,
     };
     this.state.buttonColor = (this.state.privateLobby) ? 'secondary' : 'primary';
     this.state.buttonIcon = (this.state.privateLobby) ? 'lock' : 'arrow_forward';
@@ -83,7 +84,7 @@ class Lobby extends Component {
                     error={this.password === ''}
                     required={true}
                     placeholder='Lobby Password'
-                    autoFocus={true}
+                    disabled={!this.state.typing}
                     onChange={
                       (evt) => {
                         this.setState({
@@ -101,7 +102,7 @@ class Lobby extends Component {
                     }
                     onBlur={(evt) => {
                       this.setState({
-                        typing: false,
+                        typing: this.state.buttonDown,
                         buttonColor: 'secondary',
                         buttonIcon: 'lock',
                       });
@@ -116,14 +117,23 @@ class Lobby extends Component {
                 color={this.state.buttonColor}
                 disabled={this.isLobbyFull()}
                 className={classes.button}
-                onClick={(evt) => {
+                buttonRef={(button) => this.joinButton = button}
+                onMouseDown={(evt) => {
                   this.setState({
+                    buttonDown: true,
                     typing: (this.state.privateLobby) ? true : false,
                   });
                   if (this.state.privateLobby) {
                     setTimeout(() => this.password.focus(), 0);
                   }
                 }}
+                onMouseUp={
+                  (evt) => {
+                    this.setState({
+                      buttonDown: false,
+                    });
+                  }
+                }
               >
                 <Icon>{this.state.buttonIcon}</Icon>
               </Button>
