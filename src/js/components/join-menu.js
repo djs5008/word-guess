@@ -72,18 +72,20 @@ class JoinMenu extends Component {
     const { classes } = this.props;
     return (
       <Modal
+        id='join-menu-modal'
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
         open={this.state.joining}
         className={classes.modal}
         onBackdropClick={() => this.closeMenu()}
         onEscapeKeyDown={() => this.closeMenu()}
+        // onTransitionEnd={(evt) => document.getElementById('join-menu-modal').focus()}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center'>
+        <Grid container justify='center' alignContent='center' style={{pointerEvents: 'none'}}>
           <Grid item xs={12} sm={6} md={4} lg={3}>
             <Grow in={this.state.joining} timeout={ANIM_GROW_TIME}>
-              <div className={classes.paper}>
+              <div className={classes.paper} style={{pointerEvents: 'auto'}}>
                 <Typography variant='title' id='modal-title'>
                   Join Word Guesser Lobby
                 </Typography>

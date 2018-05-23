@@ -85,10 +85,10 @@ class CreateMenu extends Component {
         onEscapeKeyDown={() => this.closeMenu()}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center'>
+        <Grid container justify='center' alignContent='center' style={{pointerEvents: 'none'}}>
           <Grid item xs={12} sm={6} md={4} lg={3}>
             <Grow in={this.state.creating} timeout={ANIM_GROW_TIME}>
-              <div className={classes.paper}>
+              <div className={classes.paper} style={{pointerEvents: 'auto'}}>
                 <Typography variant='title' id='modal-title'>
                   Create Word Guesser Lobby
                 </Typography>
