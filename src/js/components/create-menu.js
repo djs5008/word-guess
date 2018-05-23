@@ -1,24 +1,27 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid } from '@material-ui/core';
+import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid, Grow } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {
-    width: theme.spacing.unit * 50,
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
-  },
-  modal: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 0,
+    width: 'auto',
   },
   button: {
-    'margin-top': 15,
+    marginTop: 15,
   },
 });
+
+const MAX_LOBBY_LENGTH = 20;
+const MAX_PASSWORD_LENGTH = 20;
+const MIN_PLAYER_COUNT = 2;
+const MAX_PLAYER_COUNT = 10;
+const MIN_ROUND_COUNT = 1;
+const MAX_ROUND_COUNT = 10;
+const LOBBY_NAME_MATCHER = /^[A-Za-z0-9]+[A-Za-z0-9 ]*$/;
+const ANIM_GROW_TIME = 500;
 
 class CreateMenu extends Component {
 
@@ -41,15 +44,15 @@ class CreateMenu extends Component {
   }
 
   checkValidLobbyName() {
-    return this.state.lobbyName.match('^[A-Za-z0-9]+$');
+    return this.state.lobbyName.match(LOBBY_NAME_MATCHER);
   }
 
   checkMaxPlayers(value) {
-    return value >= 2 && value <= 10;
+    return value >= MIN_PLAYER_COUNT && value <= MAX_PLAYER_COUNT;
   }
 
   checkRounds(value) {
-    return value >= 1 && value <= 10;
+    return value >= MIN_ROUND_COUNT && value <= MAX_ROUND_COUNT;
   }
 
   checkPassword() {
@@ -78,124 +81,132 @@ class CreateMenu extends Component {
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
         open={this.state.creating}
-        className={classes.modal}
         onBackdropClick={() => this.closeMenu()}
         onEscapeKeyDown={() => this.closeMenu()}
+        disableRestoreFocus
       >
-        <div className={classes.paper}>
-          <Typography variant='title' id='modal-title'>
-            Create Word Guesser Lobby
-          </Typography>
-          <Typography variant='caption' id='simple-modal-description'>
-            Fill out the lobby information below
-          </Typography>
-          <br/>
-          <Divider/>
-          <TextField
-            id='lobbyname-field'
-            inputRef={(input) => this.lobbyName = input}
-            fullWidth={true}
-            type='text'
-            error={!this.checkValidLobbyName()}
-            autoFocus={true}
-            required={true}
-            helperText='LOBBY NAME (ALPHANUMERIC)'
-            onChange={(evt) => this.setState({
-              lobbyName: this.lobbyName.value,
-            })}
-          />
-          <TextField
-            id='maxplayers-field'
-            inputRef={(input) => this.maxPlayers = input}
-            fullWidth={true}
-            type='number'
-            error={!this.checkMaxPlayers(this.state.maxPlayers)}
-            required={true}
-            helperText='MAX PLAYERS'
-            value={this.state.maxPlayers}
-            onChange={
-              (evt) => {
-                if (this.checkMaxPlayers(evt.target.valueAsNumber)) {
-                  this.setState({
-                    maxPlayers: this.maxPlayers.value,
-                  })
-                }
-              }
-            }
-          />
-          <TextField
-            id='round-field'
-            inputRef={(input) => this.rounds = input}
-            fullWidth={true}
-            type='number'
-            error={!this.checkRounds(this.state.rounds)}
-            required={true}
-            helperText='NUM OF ROUNDS'
-            value={this.state.rounds}
-            onChange={
-              (evt) => {
-                if (this.checkRounds(evt.target.valueAsNumber)) {
-                  this.setState({
-                    rounds: this.rounds.value,
-                  })
-                }
-              }
-            }
-          />
-          <Grid container>
-            <Grid item xs={4}>
-              <Checkbox
-                id='private-field'
-                required={true}
-                checked={this.state.private}
-                color='primary'
-                onChange={(evt, checked) => this.setState({
-                  private: checked,
-                })}
-              />
-              <Typography variant='caption' id='private-label' align='left'>
-                PRIVATE GAME?
-              </Typography>
-            </Grid>
-            <Grid item xs={8}>
-              <TextField
-                id='password-field'
-                inputRef={(input) => this.password = input}
-                type='text'
-                required={true}
-                helperText='LOBBY PASSWORD'
-                value={this.state.password}
-                disabled={!this.state.private}
-                error={!this.checkPassword()}
-                style={{visibility: this.state.private ? 'visible' : 'hidden'}}
-                onChange={
-                  (evt) => {
-                    this.setState({
-                      password: this.password.value,
-                    })
-                  }
-                }
-              />
-            </Grid>
+        <Grid container justify='center' alignContent='center'>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
+            <Grow in={this.state.creating} timeout={ANIM_GROW_TIME}>
+              <div className={classes.paper}>
+                <Typography variant='title' id='modal-title'>
+                  Create Word Guesser Lobby
+                </Typography>
+                <Typography variant='caption' id='simple-modal-description'>
+                  Fill out the lobby information below
+                </Typography>
+                <br/>
+                <Divider/>
+                <TextField
+                  id='lobbyname-field'
+                  type='text'
+                  error={!this.checkValidLobbyName()}
+                  helperText='LOBBY NAME (ALPHANUMERIC)'
+                  fullWidth
+                  autoFocus
+                  required
+                  onChange={(evt) => {
+                    const value = evt.target.value;
+                    if (value.length <= MAX_LOBBY_LENGTH) {
+                      this.setState({
+                        lobbyName: value,
+                      });
+                    }
+                  }}
+                />
+                <TextField
+                  id='maxplayers-field'
+                  type='number'
+                  error={!this.checkMaxPlayers(this.state.maxPlayers)}
+                  helperText='MAX PLAYERS'
+                  fullWidth
+                  required
+                  value={this.state.maxPlayers}
+                  onChange={(evt) => {
+                    const value = evt.target.valueAsNumber;
+                    if (this.checkMaxPlayers(value)) {
+                      this.setState({
+                        maxPlayers: value,
+                      })
+                    }
+                  }}
+                />
+                <TextField
+                  id='round-field'
+                  type='number'
+                  error={!this.checkRounds(this.state.rounds)}
+                  fullWidth
+                  required
+                  helperText='NUM OF ROUNDS'
+                  value={this.state.rounds}
+                  onChange={(evt) => {
+                    const value = evt.target.valueAsNumber;
+                    if (this.checkRounds(value)) {
+                      this.setState({
+                        rounds: value,
+                      });
+                    }
+                  }}
+                />
+                <Grid container>
+                  <Grid item xs={4}>
+                    <Checkbox
+                      id='private-field'
+                      checked={this.state.private}
+                      color='primary'
+                      required
+                      onChange={(evt, checked) => {
+                        this.setState({
+                          private: checked,
+                        });
+                      }}
+                    />
+                    <Typography variant='caption' id='private-label' align='left'>
+                      PRIVATE GAME?
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <TextField
+                      id='password-field'
+                      type='text'
+                      helperText='LOBBY PASSWORD'
+                      value={this.state.password}
+                      disabled={!this.state.private}
+                      error={!this.checkPassword()}
+                      style={{visibility: this.state.private ? 'visible' : 'hidden'}}
+                      required
+                      onChange={(evt) => {
+                        const value = evt.target.value;
+                        if (value.length <= MAX_PASSWORD_LENGTH) {
+                          this.setState({
+                            password: value,
+                          })
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+                <br/>
+                <Divider/>
+                <Button 
+                  id='create-button'
+                  className={classes.button}
+                  fullWidth={true}
+                  variant='raised'
+                  color='primary'
+                  buttonRef={(button) => this.signinButton = button}
+                  disabled={!this.checkAllOptions()}
+                  onClick={() => {
+                    alert('game created?');
+                    this.closeMenu();
+                  }}
+                >
+                  Create Game
+                </Button>
+              </div>
+            </Grow>
           </Grid>
-          <br/>
-          <Divider/>
-          <Button 
-            id='create-button'
-            className={classes.button}
-            fullWidth={true}
-            variant='raised'
-            color='primary'
-            buttonRef={(button) => this.signinButton = button}
-            disabled={!this.checkAllOptions()}
-            onClick={() => {
-              alert('game created?');
-              this.closeMenu();
-            }}
-          >
-            Create Game
-          </Button>
-        </div>
+        </Grid>
       </Modal>
     );
   }
