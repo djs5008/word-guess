@@ -81,7 +81,6 @@ class JoinMenu extends Component {
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
         open={this.state.shown}
-        className={classes.modal}
         onBackdropClick={() => this.closeMenu()}
         onEscapeKeyDown={() => this.closeMenu()}
         disableRestoreFocus

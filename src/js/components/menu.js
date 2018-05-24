@@ -62,68 +62,72 @@ class MainMenu extends Component {
     const { classes } = this.props;
     return(
       <Grid item xs={12} hidden={this.state.hidden}>
-        <Slide 
-          direction='down'
-          in={this.state.shown}
-          timeout={ANIM_SLIDE_SPEED}
-        >
-          <Typography 
-            variant='display4'
-            id='menu-title'
-            className={classes.title}
+        <div>
+          <Slide 
+            direction='down'
+            in={this.state.shown}
+            timeout={ANIM_SLIDE_SPEED}
           >
-            Word Guesser!
-          </Typography>
-        </Slide>
-        <Slide 
-          direction='up'
-          in={this.state.shown}
-          timeout={ANIM_SLIDE_SPEED}
-        >
-          <div>
-            <Grid container spacing={8} justify='center'>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-              </Hidden>
-              <Grid item md={3} lg={2} xs={6} zeroMinWidth>
-                <Button 
-                  variant='raised'
-                  color='primary'
-                  className={classes.button}
-                  fullWidth
-                  size='medium'
-                  onClick={(evt) => this.props.createLobby()}
-                >
-                  <Typography variant='title' className={classes.createButton}>
-                    Create Game&nbsp;
-                    <Icon className={classes.iconAlign}>create</Icon>
-                  </Typography>
-                </Button>
+            <Typography 
+              variant='display4'
+              id='menu-title'
+              className={classes.title}
+            >
+              Word Guesser!
+            </Typography>
+          </Slide>
+        </div>
+        <div>
+          <Slide 
+            direction='up'
+            in={this.state.shown}
+            timeout={ANIM_SLIDE_SPEED}
+          >
+            <div>
+              <Grid container spacing={8} justify='center' alignItems='center' alignContent='center'>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                </Hidden>
+                <Grid item md={3} lg={2} xs={6} zeroMinWidth>
+                  <Button 
+                    variant='raised'
+                    color='primary'
+                    className={classes.button}
+                    fullWidth
+                    size='medium'
+                    onClick={(evt) => this.props.createLobby()}
+                  >
+                    <Typography variant='title' className={classes.createButton}>
+                      Create Game&nbsp;
+                      <Icon className={classes.iconAlign}>create</Icon>
+                    </Typography>
+                  </Button>
+                </Grid>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                  <Grid item xs={3} />
+                </Hidden>
+                <Grid item md={3} lg={2} xs={6} zeroMinWidth>
+                  <Button 
+                    variant='raised'
+                    className={classes.button}
+                    fullWidth
+                    size='medium'
+                    onClick={(evt) => this.props.joinLobby()}
+                  >
+                    <Typography variant='title' className={classes.joinButton}>
+                      Join Game&nbsp;
+                      <Icon className={classes.iconAlign}>send</Icon>
+                    </Typography>              
+                  </Button>
+                </Grid>
+                <Hidden mdUp>
+                  <Grid item xs={3} />
+                </Hidden>
               </Grid>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-                <Grid item xs={3} />
-              </Hidden>
-              <Grid item md={3} lg={2} xs={6} zeroMinWidth>
-                <Button 
-                  variant='raised'
-                  className={classes.button}
-                  fullWidth
-                  size='medium'
-                  onClick={(evt) => this.props.joinLobby()}
-                >
-                  <Typography variant='title' className={classes.joinButton}>
-                    Join Game&nbsp;
-                    <Icon className={classes.iconAlign}>send</Icon>
-                  </Typography>              
-                </Button>
-              </Grid>
-              <Hidden mdUp>
-                <Grid item xs={3} />
-              </Hidden>
-            </Grid>
-          </div>
-        </Slide>
+            </div>
+          </Slide>
+        </div>
         <Snackbar 
           anchorOrigin={{
             vertical: 'bottom',

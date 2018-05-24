@@ -167,7 +167,7 @@ class App extends Component {
 
   render() {
     return (
-      <Grid container className='vignette' justify='center' alignItems='center' alignContent='center'>
+      <Grid container className='root' justify='center' alignItems='center' alignContent='center'>
         <MainMenu 
           shown={this.state.menuShown}
           username={this.state.username}
@@ -175,7 +175,7 @@ class App extends Component {
           signOut={this.signOut}
           joinLobby={this.joinLobby}
           createLobby={this.createLobby}
-          hidden={this.state.loadingShown}
+          hidden={this.state.loadingShown || this.state.signInShown}
         />
         {this.getCurrentState()}
       </Grid>

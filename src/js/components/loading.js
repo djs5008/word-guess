@@ -1,13 +1,8 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Typography, Grid, Grow, CircularProgress } from '@material-ui/core';
+import { Typography, Grid, Grow, CircularProgress, Button } from '@material-ui/core';
 
 const styles = theme => ({
-  progress: {
-    margin: 0,
-    position: 'relative',
-    left: '15%',
-  },
   text: {
     textAlign: 'center',
     color: 'white',
@@ -41,14 +36,30 @@ class Loading extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <Grid item>
+      <Grid item xs={12}>
         <Grow in={this.state.loading} timeout={ANIM_GROW_TIME}>
-          <div>
-            <CircularProgress className={classes.progress} size={100} />
-            <Typography variant='title' className={classes.text}>
-              {this.state.loadingText}
-            </Typography>
-          </div>
+          <Grid container direction='column' spacing={16} justify='center' alignItems='center' alignContent='center'>
+            <Grid item xs={12}>
+              <CircularProgress className={classes.progress} size={100} />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant='title' className={classes.text}>
+                {this.state.loadingText}
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                color='secondary'
+                variant='raised'
+                size='small'
+                onClick={
+                  (evt) => {
+                    this.props.showMenu();
+                  }
+                }
+              >cancel</Button>
+            </Grid>
+          </Grid>
         </Grow>
       </Grid>
     );
