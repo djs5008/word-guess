@@ -175,6 +175,7 @@ class App extends Component {
           signOut={this.signOut}
           joinLobby={this.joinLobby}
           createLobby={this.createLobby}
+          hidden={this.state.loadingShown}
         />
         {this.getCurrentState()}
       </Grid>

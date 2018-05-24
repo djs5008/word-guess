@@ -35,6 +35,8 @@ const styles = theme => ({
   },
 });
 
+const ANIM_SLIDE_SPEED = 250;
+
 class MainMenu extends Component {
 
   constructor(props) {
@@ -43,7 +45,6 @@ class MainMenu extends Component {
       shown: props.shown,
       creating: false,
       joining: false,
-      slideSpeed: 300,
       shownName: true,
       hidden: false,
     }
@@ -53,6 +54,7 @@ class MainMenu extends Component {
     this.setState({
       shown: props.shown,
       shownName: props.shown,
+      hidden: props.hidden,
     });
   }
 
@@ -61,12 +63,9 @@ class MainMenu extends Component {
     return(
       <Grid item xs={12} hidden={this.state.hidden}>
         <Slide 
-          id='title-slide-transition'
           direction='down'
           in={this.state.shown}
-          timeout={this.state.slideSpeed}
-          onExited={() => this.setState({hidden: true,})}
-          onEnter={() => this.setState({hidden: false,})}
+          timeout={ANIM_SLIDE_SPEED}
         >
           <Typography 
             variant='display4'
@@ -79,7 +78,7 @@ class MainMenu extends Component {
         <Slide 
           direction='up'
           in={this.state.shown}
-          timeout={this.state.slideSpeed}
+          timeout={ANIM_SLIDE_SPEED}
         >
           <div>
             <Grid container spacing={8} justify='center'>
