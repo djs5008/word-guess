@@ -21,6 +21,8 @@ const styles = theme => ({
   passwordField: {
     padding: 0,
     margin: 0,
+    minWidth: 0,
+    maxWidth: '100%',
   },
   row: {
     margin: 0,
@@ -67,6 +69,8 @@ class Lobby extends Component {
   componentWillMount() {
     this.handleButtonDown = this.handleButtonDown.bind(this);
     this.handleButtonUp = this.handleButtonUp.bind(this);
+    this.handleMouseEnter = this.handleMouseEnter.bind(this);
+    this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
   handleButtonDown() {
@@ -85,6 +89,22 @@ class Lobby extends Component {
     this.setState({
       buttonDown: false,
     });
+  }
+
+  handleMouseEnter() {
+    if (this.state.privateLobby && !this.state.typing) {
+      this.setState({
+        buttonIcon: 'lock_open',
+      });
+    }
+  }
+
+  handleMouseLeave() {
+    if (this.state.privateLobby && !this.state.typing) {
+      this.setState({
+        buttonIcon: 'lock',
+      });    
+    }
   }
 
   render() {
@@ -109,14 +129,15 @@ class Lobby extends Component {
                   id='password-field'
                   className={classes.passwordField}
                   inputRef={(input) => this.password = input}
-                  required
+                  autoFocus
                   error={this.state.password === ''}
                   placeholder='Lobby Password'
                   disabled={!this.state.typing}
                   onChange={
                     (evt) => {
+                      const value = evt.target.value;
                       this.setState({
-                        password: this.password.value,
+                        password: value,
                       })
                     }
                   }
@@ -148,6 +169,8 @@ class Lobby extends Component {
               buttonRef={(button) => this.joinButton = button}
               onMouseDown={this.handleButtonDown}
               onMouseUp={this.handleButtonUp}
+              onMouseEnter={this.handleMouseEnter}
+              onMouseLeave={this.handleMouseLeave}
             >
               <Icon>{this.state.buttonIcon}</Icon>
             </Button>
