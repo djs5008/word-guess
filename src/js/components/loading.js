@@ -10,7 +10,7 @@ const styles = theme => ({
   },
 });
 
-const MIN_LOADING_TIME = 2000;
+const MIN_LOADING_TIME = 3000;
 const ANIM_GROW_TIME = 250;
 
 class Loading extends Component {
@@ -28,9 +28,19 @@ class Loading extends Component {
       loading: props.loading,
       loadingText: props.loadingText,
     });
-    // setTimeout(() => {
-    //   this.props.resetMenu();
-    // }, MIN_LOADING_TIME);
+    setTimeout(() => {
+      if (this.state.loading) {
+        this.cancelLoading();
+      }
+    }, MIN_LOADING_TIME);
+  }
+
+  cancelLoading() {
+    this.props.showMenu();
+    this.setState({
+      loading: false,
+      loadingText: 'Loading...',
+    });
   }
 
   render() {
@@ -54,7 +64,7 @@ class Loading extends Component {
                 size='small'
                 onClick={
                   (evt) => {
-                    this.props.showMenu();
+                    this.cancelLoading();
                   }
                 }
               >cancel</Button>
