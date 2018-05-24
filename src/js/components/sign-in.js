@@ -37,6 +37,7 @@ class SignIn extends Component {
   
   setSignedIn(status) {
     this.props.setUserProps(this.state.username);
+    this.props.signIn();
   }
 
   checkValidUsername() {
@@ -50,7 +51,6 @@ class SignIn extends Component {
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
         open={this.state.shown}
-        className={classes.modal}
         disableRestoreFocus
       >
         <Grid container justify='center' alignContent='center' alignItems='center'>

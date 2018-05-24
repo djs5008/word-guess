@@ -77,7 +77,7 @@ class Lobby extends Component {
     if (this.state.privateLobby && !this.state.typing) {
       setTimeout(() => this.password.focus(), 0);
     } else {
-      this.props.closeMenu();
+      this.props.joinLobby();
     }
   }
 

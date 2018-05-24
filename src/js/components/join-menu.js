@@ -32,23 +32,29 @@ class JoinMenu extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      joining: false,
+      shown: props.shown,
     };
     this.closeMenu = this.closeMenu.bind(this);
+    this.joinLobby = this.joinLobby.bind(this);
   }
 
   componentWillReceiveProps(props) {
     this.setState({
-      joining: props.joining,
+      shown: props.shown,
     });
   }
 
   closeMenu() {
     this.setState({
-      joining: false,
+      shown: false,
       lobbyName:'',
     });
-    this.props.resetMenu();
+    this.props.showMenu();
+  }
+
+  joinLobby() {
+    this.props.startLoading();
+    this.props.setLoadingText('Joining lobby...');
   }
 
   getAvailableLobbies() {
@@ -57,7 +63,7 @@ class JoinMenu extends Component {
     for (let i = 0; i < 5; i++) {
       items.push(
         <ListItem key={i} className={classes.lobby}>
-          <Lobby closeMenu={this.closeMenu} />
+          <Lobby closeMenu={this.closeMenu} joinLobby={this.joinLobby} />
         </ListItem>
       );
     }
@@ -72,19 +78,17 @@ class JoinMenu extends Component {
     const { classes } = this.props;
     return (
       <Modal
-        id='join-menu-modal'
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
-        open={this.state.joining}
+        open={this.state.shown}
         className={classes.modal}
         onBackdropClick={() => this.closeMenu()}
         onEscapeKeyDown={() => this.closeMenu()}
-        // onTransitionEnd={(evt) => document.getElementById('join-menu-modal').focus()}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center' style={{pointerEvents: 'none'}}>
+        <Grid container justify='center' alignContent='center' alignItems='center' style={{pointerEvents: 'none'}}>
           <Grid item xs={12} sm={6} md={4} lg={3}>
-            <Grow in={this.state.joining} timeout={ANIM_GROW_TIME}>
+            <Grow in={this.state.shown} timeout={ANIM_GROW_TIME}>
               <div className={classes.paper} style={{pointerEvents: 'auto'}}>
                 <Typography variant='title' id='modal-title'>
                   Join Word Guesser Lobby

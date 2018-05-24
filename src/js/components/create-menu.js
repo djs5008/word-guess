@@ -33,13 +33,13 @@ class CreateMenu extends Component {
       rounds: 3,
       private: false,
       password: '',
-      creating: false,
+      shown: props.shown,
     };
   }
 
   componentWillReceiveProps(props) {
     this.setState({
-      creating: props.creating,
+      shown: props.shown,
     });
   }
 
@@ -68,10 +68,15 @@ class CreateMenu extends Component {
 
   closeMenu() {
     this.setState({
-      creating: false,
+      shown: false,
       lobbyName:'',
     });
-    this.props.resetMenu();
+    this.props.showMenu();
+  }
+
+  createLobby() {
+    this.props.startLoading();
+    this.props.setLoadingText('Setting up lobby...');
   }
 
   render() {
@@ -80,14 +85,14 @@ class CreateMenu extends Component {
       <Modal
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
-        open={this.state.creating}
+        open={this.state.shown}
         onBackdropClick={() => this.closeMenu()}
         onEscapeKeyDown={() => this.closeMenu()}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center' style={{pointerEvents: 'none'}}>
+        <Grid container justify='center' alignContent='center' alignItems='center' style={{pointerEvents: 'none'}}>
           <Grid item xs={12} sm={6} md={4} lg={3}>
-            <Grow in={this.state.creating} timeout={ANIM_GROW_TIME}>
+            <Grow in={this.state.shown} timeout={ANIM_GROW_TIME}>
               <div className={classes.paper} style={{pointerEvents: 'auto'}}>
                 <Typography variant='title' id='modal-title'>
                   Create Word Guesser Lobby
@@ -197,8 +202,7 @@ class CreateMenu extends Component {
                   buttonRef={(button) => this.signinButton = button}
                   disabled={!this.checkAllOptions()}
                   onClick={() => {
-                    alert('game created?');
-                    this.closeMenu();
+                    this.createLobby();
                   }}
                 >
                   Create Game
