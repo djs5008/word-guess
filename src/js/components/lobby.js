@@ -39,10 +39,11 @@ class Lobby extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: 'Test Lobby Name',
-      privateLobby: true,
-      maxPlayers: 5,
-      playerCount: 2,
+      lobbyID: props.lobbyID,
+      name: props.lobbyName,
+      privateLobby: props.privateLobby,
+      maxPlayers: props.maxPlayers,
+      playerCount: props.playerCount,
       typing: false,
       password: '',
       buttonColor: 'invalid',
@@ -73,6 +74,16 @@ class Lobby extends Component {
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
+  componentWillReceiveProps(props) {
+    this.setState({
+      lobbyID: props.lobbyID,
+      name: props.lobbyName,
+      privateLobby: props.privateLobby,
+      maxPlayers: props.maxPlayers,
+      playerCount: props.playerCount,
+    });
+  }
+
   handleButtonDown() {
     this.setState({
       buttonDown: true,
@@ -81,7 +92,7 @@ class Lobby extends Component {
     if (this.state.privateLobby && !this.state.typing) {
       setTimeout(() => this.password.focus(), 0);
     } else {
-      this.props.joinLobby();
+      this.props.joinLobby(this.state.lobbyID);
     }
   }
 

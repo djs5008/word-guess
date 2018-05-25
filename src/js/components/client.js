@@ -7,6 +7,7 @@ let state = {
   username: null,
   userID: null,
   registering: false,
+  lobbies: [],
 };
 
 function shouldRegister() {
@@ -14,8 +15,7 @@ function shouldRegister() {
 }
 
 function register(username, cb) {
-  console.log('registering as: ' + username)
-
+  
   // Check if values are set in local (session) storage
   let userID = sessionStorage.getItem('userID');
   if (userID === null) {
@@ -30,6 +30,11 @@ function register(username, cb) {
     state.userID = sessionStorage.getItem('userID');
     state.registering = false;
     cb();
+  });
+
+  // Subscribe to list of lobbies
+  socket.on('lobbies', (lobbies) => {
+    state.lobbies = lobbies;
   });
 
   // Tell the server we are registering
@@ -48,4 +53,18 @@ function unregister() {
   socket.emit('unregister');
 }
 
-export { shouldRegister, register, unregister, registered, state };
+function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) {
+  socket.on('lobbycreated', (lobbyID) => {
+    joinLobby(lobbyID, () => {
+      cb();
+    });
+  });
+  socket.emit('createlobby', lobbyName, maxPlayers, rounds, privateLobby, password);
+}
+
+function joinLobby(lobbyID, cb) {
+  socket.on('joined', () => cb());
+  socket.emit('joining', lobbyID);
+}
+
+export { shouldRegister, register, unregister, registered, createLobby, joinLobby, state };

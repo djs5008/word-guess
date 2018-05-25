@@ -53,7 +53,6 @@ class MainMenu extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
-      shownName: props.shown,
       hidden: props.hidden,
     });
   }
@@ -95,7 +94,7 @@ class MainMenu extends Component {
                     className={classes.button}
                     fullWidth
                     size='medium'
-                    onClick={(evt) => this.props.createLobby()}
+                    onClick={(evt) => this.props.showCreateLobby()}
                   >
                     <Typography variant='title' className={classes.createButton}>
                       Create Game&nbsp;
@@ -113,7 +112,7 @@ class MainMenu extends Component {
                     className={classes.button}
                     fullWidth
                     size='medium'
-                    onClick={(evt) => this.props.joinLobby()}
+                    onClick={(evt) => this.props.showJoinLobby()}
                   >
                     <Typography variant='title' className={classes.joinButton}>
                       Join Game&nbsp;

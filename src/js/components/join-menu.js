@@ -24,6 +24,9 @@ const styles = theme => ({
     paddingBottom: 5,
     paddingLeft: 10,
     paddingRight: 10,
+  },
+  nolobbies: {
+    textAlign: 'center',
   }
 });
 
@@ -35,6 +38,7 @@ class JoinMenu extends Component {
     super(props);
     this.state = {
       shown: props.shown,
+      lobbies: props.lobbies,
     };
     this.closeMenu = this.closeMenu.bind(this);
     this.joinLobby = this.joinLobby.bind(this);
@@ -43,6 +47,7 @@ class JoinMenu extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
+      lobbies: props.lobbies,
     });
   }
 
@@ -54,19 +59,45 @@ class JoinMenu extends Component {
     this.props.showMenu();
   }
 
-  joinLobby() {
+  joinLobby(lobbyID) {
     this.props.startLoading(true);
     this.props.setLoadingText('Joining lobby...');
+    this.props.joinLobby(lobbyID, () => {
+      this.props.showGameLobby();
+    });
   }
 
   getAvailableLobbies() {
     const { classes } = this.props;
     let items = [];
-    for (let i = 0; i < 5; i++) {
+    if (Object.keys(this.state.lobbies).length > 0) {
+      Object.keys(this.state.lobbies).forEach(lobbyID => {
+        let lobby = this.state.lobbies[lobbyID];
+        items.push(
+          <ListItem key={lobbyID} className={classes.lobby}>
+            <Lobby 
+              closeMenu={this.closeMenu} 
+              joinLobby={this.joinLobby} 
+              lobbyID={lobbyID}
+              lobbyName={lobby.lobbyName}
+              maxPlayers={lobby.maxPlayers}
+              playerCount={lobby.connectedUsers.length}
+              rounds={lobby.rounds}
+              privateLobby={lobby.privateLobby}
+              password={lobby.password}
+            />
+          </ListItem>
+        );
+      });
+    } else {
       items.push(
-        <ListItem key={i} className={classes.lobby}>
-          <Lobby closeMenu={this.closeMenu} joinLobby={this.joinLobby} />
-        </ListItem>
+        <div key={1}>
+          <br/>
+          <Typography variant='caption' className={classes.nolobbies}>
+            No Lobbies Available :(
+          </Typography>
+          <br/>
+        </div>
       );
     }
     return (

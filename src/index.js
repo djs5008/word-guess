@@ -21,16 +21,26 @@ class App extends Component {
       joinMenuShown: false,
       createMenuShown: false,
       loadingShown: false,
+      gameShown: false,
       loadingText: 'Loading...',
       loadingCancellable: false,
+      lobbies: undefined,
+      lobbyMaintainer: undefined,
     };
 
     this.showMenu = this.showMenu.bind(this);
     this.signOut = this.signOut.bind(this);
-    this.createLobby = this.createLobby.bind(this);
-    this.joinLobby = this.joinLobby.bind(this);
+    this.showCreateLobby = this.showCreateLobby.bind(this);
+    this.showJoinLobby = this.showJoinLobby.bind(this);
+    this.showGameLobby = this.showGameLobby.bind(this);
     this.startLoading = this.startLoading.bind(this);
     this.setLoadingText = this.setLoadingText.bind(this);
+  }
+
+  componentDidMount() {
+    this.setState({
+      lobbyMaintainer: setInterval(() => this.setState({lobbies: Client.state.lobbies}), 500),
+    });
   }
 
   showMenu() {
@@ -58,7 +68,7 @@ class App extends Component {
     }, 0);
   }
 
-  createLobby() {
+  showCreateLobby() {
     setTimeout(() => {
       this.setState({
         menuShown: false,
@@ -67,7 +77,7 @@ class App extends Component {
     }, 0);
   }
 
-  joinLobby() {
+  showJoinLobby() {
     setTimeout(() => {
       this.setState({
         menuShown: false,
@@ -97,12 +107,25 @@ class App extends Component {
     }, 0);
   }
 
+  showGameLobby() {
+    setTimeout(() => {
+      this.setState({
+        menuShown: false,
+        joinMenuShown: false,
+        createMenuShown: false,
+        signInShown: false,
+        loadingShown: false,
+        gameShown: true,
+      });
+    }, 0);
+  }
+
   componentWillMount() {
     if (Client.shouldRegister()) {
-      let presetUser = sessionStorage.getItem('username');
+      let username = sessionStorage.getItem('username');
       this.startLoading(false);
-      this.setLoadingText('Welcome ' + presetUser + '!', 'Signing in...');
-      Client.register(presetUser, () => {
+      this.setLoadingText('Welcome ' + username + '!', 'Signing in...');
+      Client.register(username, () => {
         this.showMenu();
       });
     } else {
@@ -128,6 +151,8 @@ class App extends Component {
           setLoadingText={this.setLoadingText}
           shown={this.state.createMenuShown}
           showMenu={this.showMenu}
+          createLobby={Client.createLobby}
+          showGameLobby={this.showGameLobby}
         />
       );
     } else if (this.state.joinMenuShown) {
@@ -136,7 +161,10 @@ class App extends Component {
           startLoading={this.startLoading}
           setLoadingText={this.setLoadingText}
           shown={this.state.joinMenuShown}
+          showGameLobby={this.showGameLobby}
           showMenu={this.showMenu}
+          joinLobby={Client.joinLobby}
+          lobbies={this.state.lobbies}
         />
       );
     } else if (this.state.loadingShown) {
@@ -159,9 +187,9 @@ class App extends Component {
           username={Client.state.username}
           userID={Client.state.userID}
           signOut={this.signOut}
-          joinLobby={this.joinLobby}
-          createLobby={this.createLobby}
-          hidden={this.state.loadingShown || this.state.signInShown}
+          showJoinLobby={this.showJoinLobby}
+          showCreateLobby={this.showCreateLobby}
+          hidden={this.state.loadingShown || this.state.signInShown || this.state.gameShown}
         />
         {this.getCurrentState()}
       </Grid>
