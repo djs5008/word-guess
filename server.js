@@ -74,9 +74,37 @@ function joinGame(socket, lobbyID) {
   let sessionData = users[socket.id];
   if (sessionData !== undefined) {
     setTimeout(() => {
+      // Tell the client they joined
       socket.emit('joined');
+
+      // Set the client join data
+      sessionData.joinGame(lobbyID);
+      lobbies[lobbyID].connect(sessionData.userID);
+
       console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
     }, 1000);
+  }
+}
+
+function leaveGame(socket, disconnect) {
+  let sessionData = users[socket.id];
+  // Ensure they are signed in and in a game
+  if (sessionData !== null && sessionData !== undefined) {
+    if (sessionData.connectedGame !== undefined) {
+      setTimeout(() => {
+        // Tell the client they left
+        socket.emit('left');
+        console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Left Lobby: ' + sessionData.connectedGame);
+
+        // Disconnect the client from their lobby
+        lobbies[sessionData.connectedGame].disconnect(sessionData.userID);
+
+        // Don't remove session data if they just refreshed page
+        if (!disconnect) {
+          sessionData.leaveGame();
+        }
+      }, 1000);
+    }
   }
 }
 
@@ -85,7 +113,10 @@ io.on('connection', (socket) => {
   socket.on('unregister', () => unregisterUser(socket));
   socket.on('createlobby', (lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password));
   socket.on('joining', (lobbyID) => joinGame(socket, lobbyID));
-  socket.on('disconnect', () => unregisterUser(socket));
+  socket.on('disconnect', () => {
+    leaveGame(socket, true);
+    unregisterUser(socket);
+  });
 });
 
 io.listen(port);
