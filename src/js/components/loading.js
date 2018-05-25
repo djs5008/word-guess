@@ -10,7 +10,7 @@ const styles = theme => ({
   },
 });
 
-const MIN_LOADING_TIME = 3000;
+const MAX_LOADING_TIME = 5000;
 const ANIM_GROW_TIME = 250;
 
 class Loading extends Component {
@@ -20,6 +20,7 @@ class Loading extends Component {
     this.state = {
       loading: props.loading||false,
       loadingText: props.text||'LOADING...',
+      cancellable: props.cancellable||true,
     };
   }
 
@@ -27,12 +28,16 @@ class Loading extends Component {
     this.setState({
       loading: props.loading,
       loadingText: props.loadingText,
+      cancellable: props.cancellable,
     });
+  }
+
+  componentDidUpdate() {
     setTimeout(() => {
-      if (this.state.loading) {
+      if (this.state.loading && this.state.cancellable) {
         this.cancelLoading();
       }
-    }, MIN_LOADING_TIME);
+    }, MAX_LOADING_TIME);
   }
 
   cancelLoading() {
@@ -41,6 +46,23 @@ class Loading extends Component {
       loading: false,
       loadingText: 'Loading...',
     });
+  }
+
+  renderCancelButton() {
+    if (this.state.cancellable) {
+      return (
+        <Button
+          color='secondary'
+          variant='raised'
+          size='small'
+          onClick={
+            (evt) => {
+              this.cancelLoading();
+            }
+          }
+        >cancel</Button>
+      );
+    }
   }
 
   render() {
@@ -54,20 +76,11 @@ class Loading extends Component {
             </Grid>
             <Grid item xs={12}>
               <Typography variant='title' className={classes.text}>
-                {this.state.loadingText}
+                {this.state.loadingText.replace('\n', `<br>`)}
               </Typography>
             </Grid>
             <Grid item xs={12}>
-              <Button
-                color='secondary'
-                variant='raised'
-                size='small'
-                onClick={
-                  (evt) => {
-                    this.cancelLoading();
-                  }
-                }
-              >cancel</Button>
+              {this.renderCancelButton()}
             </Grid>
           </Grid>
         </Grow>

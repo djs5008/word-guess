@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import registerServiceWorker from './js/registerServiceWorker';
-import uuid from 'uuid/v4'
 import './css/index.css';
-import { Grid } from '@material-ui/core'
+import { Grid } from '@material-ui/core';
 
+import * as Client from './js/components/client';
 import SignIn from './js/components/sign-in';
 import MainMenu from './js/components/menu';
 import CreateMenu from './js/components/create-menu';
@@ -16,34 +16,21 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      username: sessionStorage.getItem('username'),
-      userID: sessionStorage.getItem('userID'),
       signInShown: false,
       menuShown: false,
       joinMenuShown: false,
       createMenuShown: false,
       loadingShown: false,
       loadingText: 'Loading...',
+      loadingCancellable: false,
     };
 
-    this.setUserProps = this.setUserProps.bind(this);
     this.showMenu = this.showMenu.bind(this);
     this.signOut = this.signOut.bind(this);
-    this.signIn = this.signIn.bind(this);
     this.createLobby = this.createLobby.bind(this);
     this.joinLobby = this.joinLobby.bind(this);
     this.startLoading = this.startLoading.bind(this);
     this.setLoadingText = this.setLoadingText.bind(this);
-  }
-
-  setUserProps(name) {
-    const userID = uuid().toString().replace(/-/g, '');
-    sessionStorage.setItem('username', name);
-    sessionStorage.setItem('userID', userID);
-    this.setState({
-      username: name,
-      userID: userID,
-    });
   }
 
   showMenu() {
@@ -60,23 +47,13 @@ class App extends Component {
 
   signOut() {
     setTimeout(() => {
+      Client.unregister();
       this.setState({
-        username: null,
-        userID: null,
         signInShown: true,
         menuShown: false,
         loadingShown: false,
         createLobby: false,
         joinLobby: false,
-      });
-    }, 0);
-  }
-
-  signIn() {
-    setTimeout(() => {
-      this.setState({
-        signInShown: false,
-        menuShown: true,
       });
     }, 0);
   }
@@ -107,7 +84,7 @@ class App extends Component {
     }, 0);
   }
 
-  startLoading() {
+  startLoading(cancellable) {
     setTimeout(() => {
       this.setState({
         menuShown: false,
@@ -115,15 +92,21 @@ class App extends Component {
         createMenuShown: false,
         signInShown: false,
         loadingShown: true,
+        loadingCancellable: cancellable,
       });
     }, 0);
   }
 
   componentWillMount() {
-    if (this.state.userID === null) {
-      this.signOut();
+    if (Client.shouldRegister()) {
+      let presetUser = sessionStorage.getItem('username');
+      this.startLoading(false);
+      this.setLoadingText('Welcome ' + presetUser + '!', 'Signing in...');
+      Client.register(presetUser, () => {
+        this.showMenu();
+      });
     } else {
-      this.signIn();
+      this.signOut();
     }
   }
 
@@ -132,8 +115,10 @@ class App extends Component {
       return (
         <SignIn 
           shown={this.state.signInShown}
-          setUserProps={this.setUserProps}
-          signIn={this.signIn}
+          register={Client.register}
+          showMenu={this.showMenu}
+          startLoading={this.startLoading}
+          setLoadingText={this.setLoadingText}
         />
       );
     } else if (this.state.createMenuShown) {
@@ -160,6 +145,7 @@ class App extends Component {
           loading={this.state.loadingShown}
           loadingText={this.state.loadingText}
           showMenu={this.showMenu}
+          cancellable={this.state.loadingCancellable}
         />
       );
     }
@@ -170,8 +156,8 @@ class App extends Component {
       <Grid container className='root' justify='center' alignItems='center' alignContent='center'>
         <MainMenu 
           shown={this.state.menuShown}
-          username={this.state.username}
-          userID={this.state.userID}
+          username={Client.state.username}
+          userID={Client.state.userID}
           signOut={this.signOut}
           joinLobby={this.joinLobby}
           createLobby={this.createLobby}

@@ -36,8 +36,11 @@ class SignIn extends Component {
   }
   
   setSignedIn(status) {
-    this.props.setUserProps(this.state.username);
-    this.props.signIn();
+    this.props.startLoading(false);
+    this.props.setLoadingText('Signing in...');
+    this.props.register(this.state.username, () => {
+      this.props.showMenu();
+    });
   }
 
   checkValidUsername() {

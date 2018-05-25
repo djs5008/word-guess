@@ -55,7 +55,7 @@ class JoinMenu extends Component {
   }
 
   joinLobby() {
-    this.props.startLoading();
+    this.props.startLoading(true);
     this.props.setLoadingText('Joining lobby...');
   }
 
