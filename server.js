@@ -51,16 +51,21 @@ function registerUser(username, userID, socket) {
 
 function unregisterUser(socket) {
   let sessionData = users[socket.id];
-  if (sessionData !== undefined) {
+  if (sessionData !== undefined && sessionData !== null) {
     console.log('Client: \'' + sessionData.username + '\'(' + sessionData.userID + ') Unregistered!');
     clearInterval(users[socket.id].lobbyDispatcher);
     users[socket.id] = null;
   }
 }
 
+function checkRegistration(socket, userID) {
+  let sessionData = users[socket.id];
+  socket.emit('registration_check', (sessionData !== undefined && sessionData !== null));
+}
+
 function createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password) {
   let sessionData = users[socket.id];
-  if (sessionData !== undefined) {
+  if (sessionData !== undefined && sessionData !== null) {
     setTimeout(() => {
       let lobbyID = uuid().toString().replace(/-/g, '');
       lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby, password);
@@ -72,7 +77,7 @@ function createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, passwo
 
 function joinGame(socket, lobbyID) {
   let sessionData = users[socket.id];
-  if (sessionData !== undefined) {
+  if (sessionData !== undefined && sessionData !== null) {
     setTimeout(() => {
       // Tell the client they joined
       socket.emit('joined');
@@ -111,8 +116,10 @@ function leaveGame(socket, disconnect) {
 io.on('connection', (socket) => {
   socket.on('register', (username, userID) => registerUser(username, userID, socket));
   socket.on('unregister', () => unregisterUser(socket));
+  socket.on('checkRegistration', (userID) => checkRegistration(socket, userID));
   socket.on('createlobby', (lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password));
   socket.on('joining', (lobbyID) => joinGame(socket, lobbyID));
+  socket.on('leaving', () => leaveGame(socket, false));
   socket.on('disconnect', () => {
     leaveGame(socket, true);
     unregisterUser(socket);

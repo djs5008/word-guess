@@ -30,9 +30,12 @@ const styles = theme => ({
     fontFamily: 'Lobster',
     textShadow: '0 1px 0 rgb(204,204,204) , 0 2px 0 rgb(201,201,201) , 0 3px 0 rgb(187,187,187) , 0 4px 0 rgb(185,185,185) , 0 5px 0 rgb(170,170,170) , 0 6px 1px rgba(0,0,0,0.0980392) , 0 0 5px rgba(0,0,0,0.0980392) , 0 1px 3px rgba(0,0,0,0.298039) , 0 3px 5px rgba(0,0,0,0.2) , 0 5px 10px rgba(0,0,0,0.247059) , 0 10px 10px rgba(0,0,0,0.2) , 0 20px 20px rgba(0,0,0,0.14902)',
     textAlign: 'center',
-    margin: '-50px 0px 50px 0px',
+    margin: '0px 0px 50px 0px',
     fontSize: '17vmin',
   },
+  snackbar: {
+    marginBottom: 10,
+  }
 });
 
 const ANIM_SLIDE_SPEED = 250;
@@ -43,18 +46,26 @@ class MainMenu extends Component {
     super(props);
     this.state = {
       shown: props.shown,
+      shownName: props.shownName,
       creating: false,
       joining: false,
-      shownName: true,
-      hidden: false,
+      hidden: true,
     }
   }
 
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
+      shownName: props.shownName,
       hidden: props.hidden,
     });
+  }
+
+  stopSnackbar() {
+    this.setState({
+      shownName: false,
+    });
+    this.props.stopSnackbar();
   }
 
   render() {
@@ -128,15 +139,15 @@ class MainMenu extends Component {
           </Slide>
         </div>
         <Snackbar 
+          className={classes.snackbar}
           anchorOrigin={{
             vertical: 'bottom',
             horizontal: 'center',
           }}
           open={this.props.username !== null && this.state.shownName}
           autoHideDuration={6000}
-          onClose={(evt) => this.setState({
-            shownName: false,
-          })}
+          onClose={(evt) => this.stopSnackbar()}
+          onExit={(evt) => this.stopSnackbar()}
           message={
             <div>
               <Typography variant='body2' className={classes.createButton}>

@@ -1,16 +1,22 @@
 import openSocket from 'socket.io-client';
 import uuid from 'uuid/v4';
 
-const socket = openSocket('http://localhost:3001');
+const socket = openSocket('http://localhost:3001/', {
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax : 5000,
+  reconnectionAttempts: Infinity
+});
 
 let state = {
   username: null,
   userID: null,
   registering: false,
+  reconnecting: false,
   lobbies: [],
 };
 
-function shouldRegister() {
+function shouldAutoRegister() {
   return sessionStorage.getItem('userID') !== null;
 }
 
@@ -32,17 +38,29 @@ function register(username, cb) {
     cb();
   });
 
-  // Subscribe to list of lobbies
+  // Subscribe to maintain list of lobbies
   socket.on('lobbies', (lobbies) => {
     state.lobbies = lobbies;
+  });
+
+  // Subscribe to disconnection handler
+  socket.on('disconnect', () => {
+    state.reconnecting = true;
+  });
+
+  socket.on('reconnect', () => {
+    state.reconnecting = false;
   });
 
   // Tell the server we are registering
   socket.emit('register', username, userID);
 }
 
-function registered() {
-  return state.userID !== null;
+function registered(cb) {
+  socket.on('registration_check', (result) => {
+    cb(result);
+  });
+  socket.emit('checkRegistration', state.userID);
 }
 
 function unregister() {
@@ -67,4 +85,9 @@ function joinLobby(lobbyID, cb) {
   socket.emit('joining', lobbyID);
 }
 
-export { shouldRegister, register, unregister, registered, createLobby, joinLobby, state };
+function leaveLobby(lobbyID, cb) {
+  socket.on('left', () => cb());
+  socket.emit('leaving', lobbyID);
+}
+
+export { shouldAutoRegister, register, unregister, registered, createLobby, joinLobby, leaveLobby, state };

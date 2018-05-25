@@ -21,6 +21,7 @@ class Loading extends Component {
       loading: props.loading||false,
       loadingText: props.text||'LOADING...',
       cancellable: props.cancellable||true,
+      hidden: false,
     };
   }
 
@@ -29,6 +30,7 @@ class Loading extends Component {
       loading: props.loading,
       loadingText: props.loadingText,
       cancellable: props.cancellable,
+      hidden: props.hidden,
     });
   }
 
@@ -68,7 +70,7 @@ class Loading extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <Grid item xs={12}>
+      <Grid item xs={12} hidden={this.state.hidden}>
         <Grow in={this.state.loading} timeout={ANIM_GROW_TIME}>
           <Grid container direction='column' spacing={16} justify='center' alignItems='center' alignContent='center'>
             <Grid item xs={12}>

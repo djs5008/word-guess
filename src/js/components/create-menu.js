@@ -75,8 +75,7 @@ class CreateMenu extends Component {
   }
 
   createLobby() {
-    this.props.startLoading(true);
-    this.props.setLoadingText('Setting up lobby...');
+    this.props.startLoading(true, 'Setting up lobby...');
     this.props.createLobby(
       this.state.lobbyName, 
       this.state.maxPlayers, 

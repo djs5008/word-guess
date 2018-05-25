@@ -16,16 +16,12 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      signInShown: false,
-      menuShown: false,
-      joinMenuShown: false,
-      createMenuShown: false,
-      loadingShown: false,
-      gameShown: false,
+      activeState: undefined,
       loadingText: 'Loading...',
       loadingCancellable: false,
       lobbies: undefined,
-      lobbyMaintainer: undefined,
+      shownName: false,
+      sessionTimer: undefined,
     };
 
     this.showMenu = this.showMenu.bind(this);
@@ -34,23 +30,46 @@ class App extends Component {
     this.showJoinLobby = this.showJoinLobby.bind(this);
     this.showGameLobby = this.showGameLobby.bind(this);
     this.startLoading = this.startLoading.bind(this);
-    this.setLoadingText = this.setLoadingText.bind(this);
+    this.stopSnackbar = this.stopSnackbar.bind(this);
   }
 
   componentDidMount() {
     this.setState({
-      lobbyMaintainer: setInterval(() => this.setState({lobbies: Client.state.lobbies}), 500),
+      sessionTimer: setInterval(() => {
+        this.setState({
+          lobbies: Client.state.lobbies,
+        });
+        if (Client.state.reconnecting) {
+          this.startLoading(false, 'Reconnecting...');
+        } else {
+          if (this.state.activeState === 'loading'
+            && this.state.loadingText === 'Reconnecting...') {
+            this.showMenu();
+          }
+        }
+      }, 500),
     });
+  }
+
+  stopSnackbar() {
+    setTimeout(() => {      
+      this.setState({
+        shownName: false,
+      })
+    }, 0);
   }
 
   showMenu() {
     setTimeout(() => {
-      this.setState({
-        menuShown: true,
-        joinMenuShown: false,
-        createMenuShown: false,
-        loadingShown: false,
-        signInShown: false,
+      Client.registered((result) => {
+        if (result) {
+          this.setState({
+            activeState: 'menu',
+            shownName: true,
+          });
+        } else {
+          this.signOut();
+        }
       });
     }, 0);
   }
@@ -59,11 +78,7 @@ class App extends Component {
     setTimeout(() => {
       Client.unregister();
       this.setState({
-        signInShown: true,
-        menuShown: false,
-        loadingShown: false,
-        createLobby: false,
-        joinLobby: false,
+        activeState: 'signin',
       });
     }, 0);
   }
@@ -71,8 +86,7 @@ class App extends Component {
   showCreateLobby() {
     setTimeout(() => {
       this.setState({
-        menuShown: false,
-        createMenuShown: true,
+        activeState: 'createmenu',
       });
     }, 0);
   }
@@ -80,29 +94,17 @@ class App extends Component {
   showJoinLobby() {
     setTimeout(() => {
       this.setState({
-        menuShown: false,
-        joinMenuShown: true,
+        activeState: 'joinmenu',
       });
     }, 0);
   }
 
-  setLoadingText(text) {
+  startLoading(cancellable, text) {
     setTimeout(() => {
       this.setState({
-        loadingText: text,
-      });
-    }, 0);
-  }
-
-  startLoading(cancellable) {
-    setTimeout(() => {
-      this.setState({
-        menuShown: false,
-        joinMenuShown: false,
-        createMenuShown: false,
-        signInShown: false,
-        loadingShown: true,
+        activeState: 'loading',
         loadingCancellable: cancellable,
+        loadingText: text,
       });
     }, 0);
   }
@@ -110,21 +112,15 @@ class App extends Component {
   showGameLobby() {
     setTimeout(() => {
       this.setState({
-        menuShown: false,
-        joinMenuShown: false,
-        createMenuShown: false,
-        signInShown: false,
-        loadingShown: false,
-        gameShown: true,
+        activeState: 'game',
       });
     }, 0);
   }
 
   componentWillMount() {
-    if (Client.shouldRegister()) {
+    if (Client.shouldAutoRegister()) {
       let username = sessionStorage.getItem('username');
-      this.startLoading(false);
-      this.setLoadingText('Welcome ' + username + '!', 'Signing in...');
+      this.startLoading(false, 'Welcome ' + username + '!', 'Signing in...');
       Client.register(username, () => {
         this.showMenu();
       });
@@ -134,48 +130,48 @@ class App extends Component {
   }
 
   getCurrentState() {
-    if (this.state.signInShown) {
-      return (
-        <SignIn 
-          shown={this.state.signInShown}
-          register={Client.register}
-          showMenu={this.showMenu}
-          startLoading={this.startLoading}
-          setLoadingText={this.setLoadingText}
-        />
-      );
-    } else if (this.state.createMenuShown) {
-      return (
-        <CreateMenu 
-          startLoading={this.startLoading}
-          setLoadingText={this.setLoadingText}
-          shown={this.state.createMenuShown}
-          showMenu={this.showMenu}
-          createLobby={Client.createLobby}
-          showGameLobby={this.showGameLobby}
-        />
-      );
-    } else if (this.state.joinMenuShown) {
-      return (
-        <JoinMenu 
-          startLoading={this.startLoading}
-          setLoadingText={this.setLoadingText}
-          shown={this.state.joinMenuShown}
-          showGameLobby={this.showGameLobby}
-          showMenu={this.showMenu}
-          joinLobby={Client.joinLobby}
-          lobbies={this.state.lobbies}
-        />
-      );
-    } else if (this.state.loadingShown) {
-      return (
-        <Loading 
-          loading={this.state.loadingShown}
-          loadingText={this.state.loadingText}
-          showMenu={this.showMenu}
-          cancellable={this.state.loadingCancellable}
-        />
-      );
+    switch (this.state.activeState) {
+      case 'signin':
+        return (
+          <SignIn 
+            shown={this.state.activeState === 'signin'}
+            register={Client.register}
+            showMenu={this.showMenu}
+            startLoading={this.startLoading}
+          />
+        );
+      case 'createmenu': 
+        return (
+          <CreateMenu 
+            shown={this.state.activeState === 'createmenu'}
+            createLobby={Client.createLobby}
+            startLoading={this.startLoading}
+            showMenu={this.showMenu}
+            showGameLobby={this.showGameLobby}
+          />
+        );
+      case 'joinmenu':
+        return (
+          <JoinMenu 
+            shown={this.state.activeState === 'joinmenu'}
+            lobbies={this.state.lobbies}
+            joinLobby={Client.joinLobby}
+            startLoading={this.startLoading}
+            showGameLobby={this.showGameLobby}
+            showMenu={this.showMenu}
+          />
+        );
+      case 'loading':
+      default:
+        return (
+          <Loading 
+            loading={this.state.activeState === 'loading'}
+            loadingText={this.state.loadingText}
+            cancellable={this.state.loadingCancellable}
+            showMenu={this.showMenu}
+            hidden={this.state.activeState !== 'loading'}
+          />
+        );
     }
   }
 
@@ -183,13 +179,15 @@ class App extends Component {
     return (
       <Grid container className='root' justify='center' alignItems='center' alignContent='center'>
         <MainMenu 
-          shown={this.state.menuShown}
+          shown={this.state.activeState === 'menu'}
+          shownName={this.state.shownName}
           username={Client.state.username}
           userID={Client.state.userID}
           signOut={this.signOut}
           showJoinLobby={this.showJoinLobby}
           showCreateLobby={this.showCreateLobby}
-          hidden={this.state.loadingShown || this.state.signInShown || this.state.gameShown}
+          stopSnackbar={this.stopSnackbar}
+          hidden={['loading', 'signin', 'game', undefined].includes(this.state.activeState)}
         />
         {this.getCurrentState()}
       </Grid>
