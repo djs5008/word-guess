@@ -22,7 +22,6 @@
   "homepage": "https://github.com/djs5008/word-guess#readme",
   "dependencies": {
     "@material-ui/core": "^1.0.0",
-    "bootstrap": "^4.1.1",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
     "react-scripts": "1.1.4",
