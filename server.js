@@ -61,18 +61,22 @@ function unregisterUser(socket) {
 function createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password) {
   let sessionData = users[socket.id];
   if (sessionData !== undefined) {
-    let lobbyID = uuid().toString().replace(/-/g, '');
-    lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby, password);
-    socket.emit('lobbycreated', lobbyID);
-    console.log('Created Lobby: ' + lobbyID);
+    setTimeout(() => {
+      let lobbyID = uuid().toString().replace(/-/g, '');
+      lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby, password);
+      socket.emit('lobbycreated', lobbyID);
+      console.log('Created Lobby: ' + lobbyID);
+    }, 1000);
   }
 }
 
 function joinGame(socket, lobbyID) {
   let sessionData = users[socket.id];
   if (sessionData !== undefined) {
-    socket.emit('joined');
-    console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
+    setTimeout(() => {
+      socket.emit('joined');
+      console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
+    }, 1000);
   }
 }
 
