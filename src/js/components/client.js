@@ -31,7 +31,7 @@ function register(username, cb) {
   }
 
   // Subscribe to 'registered' packet
-  socket.on('registered', () => {
+  socket.once('registered', () => {
     state.username = sessionStorage.getItem('username');
     state.userID = sessionStorage.getItem('userID');
     state.registering = false;
@@ -39,16 +39,16 @@ function register(username, cb) {
   });
 
   // Subscribe to maintain list of lobbies
-  socket.on('lobbies', (lobbies) => {
+  socket.once('lobbies', (lobbies) => {
     state.lobbies = lobbies;
   });
 
   // Subscribe to disconnection handler
-  socket.on('disconnect', () => {
+  socket.once('disconnect', () => {
     state.reconnecting = true;
   });
 
-  socket.on('reconnect', () => {
+  socket.once('reconnect', () => {
     state.reconnecting = false;
   });
 
@@ -57,7 +57,7 @@ function register(username, cb) {
 }
 
 function registered(cb) {
-  socket.on('registration_check', (result) => {
+  socket.once('registration_check', (result) => {
     cb(result);
   });
   socket.emit('checkRegistration', state.userID);
@@ -72,21 +72,23 @@ function unregister() {
 }
 
 function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) {
-  socket.on('lobbycreated', (lobbyID) => {
-    joinLobby(lobbyID, () => {
-      cb();
+  socket.once('lobbycreated', (lobbyID) => {
+    joinLobby(lobbyID, password, (status) => {
+      cb(status);
     });
   });
   socket.emit('createlobby', lobbyName, maxPlayers, rounds, privateLobby, password);
 }
 
-function joinLobby(lobbyID, cb) {
-  socket.on('joined', () => cb());
-  socket.emit('joining', lobbyID);
+function joinLobby(lobbyID, password, cb) {
+  socket.once('joined', (status) => {
+    cb(status);
+  });
+  socket.emit('joining', lobbyID, password);
 }
 
 function leaveLobby(lobbyID, cb) {
-  socket.on('left', () => cb());
+  socket.once('left', () => cb());
   socket.emit('leaving', lobbyID);
 }
 

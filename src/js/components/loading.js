@@ -10,7 +10,6 @@ const styles = theme => ({
   },
 });
 
-const MAX_LOADING_TIME = 5000;
 const ANIM_GROW_TIME = 250;
 
 class Loading extends Component {
@@ -18,10 +17,10 @@ class Loading extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: props.loading||false,
-      loadingText: props.text||'LOADING...',
-      cancellable: props.cancellable||true,
-      hidden: false,
+      loading: false,
+      loadingText: 'LOADING...',
+      cancellable: true,
+      hidden: true,
     };
   }
 
@@ -34,20 +33,14 @@ class Loading extends Component {
     });
   }
 
-  componentDidUpdate() {
-    setTimeout(() => {
-      if (this.state.loading && this.state.cancellable) {
-        this.cancelLoading();
-      }
-    }, MAX_LOADING_TIME);
-  }
-
   cancelLoading() {
-    this.props.showMenu();
     this.setState({
+      hidden: true,
       loading: false,
       loadingText: 'Loading...',
     });
+    this.props.cancelLoading();
+    this.props.showMenu();
   }
 
   renderCancelButton() {
@@ -67,6 +60,18 @@ class Loading extends Component {
     }
   }
 
+  processText(text) {
+    let result = [];
+    let splits = text.split('\n');
+    let i = 0;
+    splits.forEach(seg => {
+      result.push(seg);
+      result.push(<br key={i++}/>);
+    });
+    result.pop();
+    return result;
+  }
+
   render() {
     const { classes } = this.props;
     return (
@@ -78,7 +83,7 @@ class Loading extends Component {
             </Grid>
             <Grid item xs={12}>
               <Typography variant='title' className={classes.text}>
-                {this.state.loadingText.replace('\n', `<br>`)}
+                {this.processText(this.state.loadingText)}
               </Typography>
             </Grid>
             <Grid item xs={12}>

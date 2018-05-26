@@ -92,7 +92,7 @@ class Lobby extends Component {
     if (this.state.privateLobby && !this.state.typing) {
       setTimeout(() => this.password.focus(), 0);
     } else {
-      this.props.joinLobby(this.state.lobbyID);
+      this.props.joinLobby(this.state.lobbyID, this.state.password);
     }
   }
 

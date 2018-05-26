@@ -11,6 +11,8 @@ import CreateMenu from './js/components/create-menu';
 import JoinMenu from './js/components/join-menu';
 import Loading from './js/components/loading';
 
+const MAX_LOADING_TIME = 5000;
+
 class App extends Component {
 
   constructor(props) {
@@ -19,6 +21,7 @@ class App extends Component {
       activeState: undefined,
       loadingText: 'Loading...',
       loadingCancellable: false,
+      loadTimer: undefined,
       lobbies: undefined,
       shownName: false,
       sessionTimer: undefined,
@@ -31,6 +34,7 @@ class App extends Component {
     this.showGameLobby = this.showGameLobby.bind(this);
     this.startLoading = this.startLoading.bind(this);
     this.stopSnackbar = this.stopSnackbar.bind(this);
+    this.cancelLoading = this.cancelLoading.bind(this);
   }
 
   componentDidMount() {
@@ -59,7 +63,28 @@ class App extends Component {
     }, 0);
   }
 
+  cancelLoading() {
+    if (this.state.loadTimer !== undefined) {
+      setTimeout(() => {
+        clearTimeout(this.state.loadTimer);
+        this.setState({
+          activeState: undefined,
+          loadTimer: undefined,
+        });
+      }, 0);
+    }
+  }
+
+  autoRegister() {
+    let username = sessionStorage.getItem('username');
+    this.startLoading(false, 'Welcome ' + username + '!\nSigning in...');
+    Client.register(username, () => {
+      this.showMenu();
+    });
+  }
+
   showMenu() {
+    this.cancelLoading();
     setTimeout(() => {
       Client.registered((result) => {
         if (result) {
@@ -68,13 +93,18 @@ class App extends Component {
             shownName: true,
           });
         } else {
-          this.signOut();
+          if (Client.shouldAutoRegister()) {
+            this.autoRegister();
+          } else {
+            this.signOut();
+          }
         }
       });
     }, 0);
   }
 
   signOut() {
+    this.cancelLoading();
     setTimeout(() => {
       Client.unregister();
       this.setState({
@@ -84,6 +114,7 @@ class App extends Component {
   }
 
   showCreateLobby() {
+    this.cancelLoading();
     setTimeout(() => {
       this.setState({
         activeState: 'createmenu',
@@ -92,6 +123,7 @@ class App extends Component {
   }
 
   showJoinLobby() {
+    this.cancelLoading();
     setTimeout(() => {
       this.setState({
         activeState: 'joinmenu',
@@ -105,11 +137,15 @@ class App extends Component {
         activeState: 'loading',
         loadingCancellable: cancellable,
         loadingText: text,
+        loadTimer: setTimeout(() => {
+          this.cancelLoading();
+        }, MAX_LOADING_TIME),
       });
     }, 0);
   }
 
   showGameLobby() {
+    this.cancelLoading();
     setTimeout(() => {
       this.setState({
         activeState: 'game',
@@ -119,11 +155,7 @@ class App extends Component {
 
   componentWillMount() {
     if (Client.shouldAutoRegister()) {
-      let username = sessionStorage.getItem('username');
-      this.startLoading(false, 'Welcome ' + username + '!', 'Signing in...');
-      Client.register(username, () => {
-        this.showMenu();
-      });
+      this.autoRegister();
     } else {
       this.signOut();
     }
@@ -158,6 +190,7 @@ class App extends Component {
             joinLobby={Client.joinLobby}
             startLoading={this.startLoading}
             showGameLobby={this.showGameLobby}
+            showJoinLobby={this.showJoinLobby}
             showMenu={this.showMenu}
           />
         );
@@ -169,6 +202,7 @@ class App extends Component {
             loadingText={this.state.loadingText}
             cancellable={this.state.loadingCancellable}
             showMenu={this.showMenu}
+            cancelLoading={this.cancelLoading}
             hidden={this.state.activeState !== 'loading'}
           />
         );

@@ -21,13 +21,13 @@ class SessionData {
 }
 
 let lobbies = {};
+let lobbyPasswords = {};
 class LobbyData {
-  constructor(lobbyName, maxPlayers, rounds, privateLobby, password) {
+  constructor(lobbyName, maxPlayers, rounds, privateLobby) {
     this.lobbyName = lobbyName;
     this.maxPlayers = maxPlayers;
     this.rounds = rounds;
     this.privateLobby = privateLobby;
-    this.password = password;
     this.connectedUsers = [];
   }
 
@@ -41,12 +41,14 @@ class LobbyData {
 }
 
 function registerUser(username, userID, socket) {
-  console.log('Client: \'' + username + '\'(' + userID + ') Registered!');
-  users[socket.id] = new SessionData(username, userID);
-  users[socket.id].lobbyDispatcher = setInterval(() => {
-    socket.emit('lobbies', lobbies);
-  }, 500);
-  socket.emit('registered');
+  setTimeout(() => {
+    console.log('Client: \'' + username + '\'(' + userID + ') Registered!');
+    users[socket.id] = new SessionData(username, userID);
+    users[socket.id].lobbyDispatcher = setInterval(() => {
+      socket.emit('lobbies', lobbies);
+    }, 500);
+    socket.emit('registered');
+  }, 750);
 }
 
 function unregisterUser(socket) {
@@ -68,26 +70,37 @@ function createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, passwo
   if (sessionData !== undefined && sessionData !== null) {
     setTimeout(() => {
       let lobbyID = uuid().toString().replace(/-/g, '');
-      lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby, password);
+      lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby);
+      lobbyPasswords[lobbyID] = password;
       socket.emit('lobbycreated', lobbyID);
       console.log('Created Lobby: ' + lobbyID);
     }, 1000);
   }
 }
 
-function joinGame(socket, lobbyID) {
+function joinGame(socket, lobbyID, password) {
   let sessionData = users[socket.id];
+  let lobby = lobbies[lobbyID];
   if (sessionData !== undefined && sessionData !== null) {
-    setTimeout(() => {
-      // Tell the client they joined
-      socket.emit('joined');
+    if (lobby !== undefined && lobby !== null) {
+      if (!lobby.privateLobby || lobbyPasswords[lobbyID] === password) {
+        setTimeout(() => {
+          // Tell the client they joined
+          socket.emit('joined', true);
 
-      // Set the client join data
-      sessionData.joinGame(lobbyID);
-      lobbies[lobbyID].connect(sessionData.userID);
+          // Set the client join data
+          sessionData.joinGame(lobbyID);
+          lobby.connect(sessionData.userID);
 
-      console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
-    }, 1000);
+          console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
+        }, 1000);
+      } else {
+        setTimeout(() => {
+          // Tell the client they had the wrong password
+          socket.emit('joined', false);
+        }, 1000);
+      }
+    }
   }
 }
 
@@ -118,7 +131,7 @@ io.on('connection', (socket) => {
   socket.on('unregister', () => unregisterUser(socket));
   socket.on('checkRegistration', (userID) => checkRegistration(socket, userID));
   socket.on('createlobby', (lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password));
-  socket.on('joining', (lobbyID) => joinGame(socket, lobbyID));
+  socket.on('joining', (lobbyID, password) => joinGame(socket, lobbyID, password));
   socket.on('leaving', () => leaveGame(socket, false));
   socket.on('disconnect', () => {
     leaveGame(socket, true);

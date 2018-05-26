@@ -36,7 +36,7 @@ class SignIn extends Component {
   }
   
   setSignedIn(status) {
-    this.props.startLoading(false, 'Signing in...');
+    this.props.startLoading(false, 'Welcome ' + this.state.username + '!\nSigning in...');
     this.props.register(this.state.username, () => {
       this.props.showMenu();
     });

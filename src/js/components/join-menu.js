@@ -59,10 +59,14 @@ class JoinMenu extends Component {
     this.props.showMenu();
   }
 
-  joinLobby(lobbyID) {
+  joinLobby(lobbyID, password) {
     this.props.startLoading(true, 'Joining lobby...');
-    this.props.joinLobby(lobbyID, () => {
-      this.props.showGameLobby();
+    this.props.joinLobby(lobbyID, password, (status) => {
+      if (status) {
+        this.props.showGameLobby();
+      } else {
+        this.props.showJoinLobby();
+      }
     });
   }
 
