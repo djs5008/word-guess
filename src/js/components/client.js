@@ -4,7 +4,7 @@ import uuid from 'uuid/v4';
 const socket = openSocket('http://localhost:3001/', {
   reconnection: true,
   reconnectionDelay: 1000,
-  reconnectionDelayMax : 5000,
+  reconnectionDelayMax: 5000,
   reconnectionAttempts: Infinity
 });
 
