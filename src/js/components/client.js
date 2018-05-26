@@ -39,7 +39,7 @@ function register(username, cb) {
   });
 
   // Subscribe to maintain list of lobbies
-  socket.once('lobbies', (lobbies) => {
+  socket.on('lobbies', (lobbies) => {
     state.lobbies = lobbies;
   });
 
@@ -68,6 +68,7 @@ function unregister() {
   state.userID = null;
   sessionStorage.removeItem('username');
   sessionStorage.removeItem('userID');
+  socket.off('lobbies');
   socket.emit('unregister');
 }
 
