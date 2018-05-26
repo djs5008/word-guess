@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid, Grow } from '@material-ui/core';
+import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid, Grow, Tooltip } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {
@@ -113,23 +113,31 @@ class CreateMenu extends Component {
                 </Typography>
                 <br/>
                 <Divider/>
-                <TextField
-                  id='lobbyname-field'
-                  type='text'
-                  error={!this.checkValidLobbyName()}
-                  helperText='LOBBY NAME (ALPHANUMERIC)'
-                  fullWidth
-                  autoFocus
-                  required
-                  onChange={(evt) => {
-                    const value = evt.target.value;
-                    if (value.length <= MAX_LOBBY_LENGTH) {
-                      this.setState({
-                        lobbyName: value,
-                      });
-                    }
-                  }}
-                />
+                <Tooltip
+                  open={this.state.lobbyName.length > 0 && !this.checkValidLobbyName()}
+                  placement='bottom'
+                  title={'Invalid Characters: \'' + this.state.lobbyName.replace(/[a-zA-Z0-9 ]/g, '') + '\''}
+                  enterDelay={500}
+                >
+                  <TextField
+                    id='lobbyname-field'
+                    type='text'
+                    error={!this.checkValidLobbyName()}
+                    value={this.state.lobbyName}
+                    helperText='LOBBY NAME (ALPHANUMERIC)'
+                    fullWidth
+                    autoFocus
+                    required
+                    onChange={(evt) => {
+                      const value = evt.target.value;
+                      if (value.length <= MAX_LOBBY_LENGTH) {
+                        this.setState({
+                          lobbyName: value,
+                        });
+                      }
+                    }}
+                  />
+                </Tooltip>
                 <TextField
                   id='maxplayers-field'
                   type='number'

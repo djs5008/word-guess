@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { Typography, Modal, TextField, Button, Grid, Grow } from '@material-ui/core';
+import { Typography, Modal, TextField, Tooltip, Button, Grid, Grow } from '@material-ui/core';
 
 const styles = theme => ({
   paper: {
@@ -18,6 +18,7 @@ const styles = theme => ({
 });
 
 const ANIM_GROW_TIME = 500;
+const MAX_USERNAME_LENGTH = 16;
 
 class SignIn extends Component {
 
@@ -65,27 +66,39 @@ class SignIn extends Component {
                 <Typography variant='caption' id='simple-modal-description'>
                   Enter a valid username below (alphanumeric)
                 </Typography>
-                <TextField
-                  id='username-field'
-                  inputRef={(input) => this.usernameField = input}
-                  className={classes.textfield}
-                  type='text'
-                  error={!this.checkValidUsername()}
-                  autoFocus={true}
-                  required={true}
-                  helperText='USERNAME'
-                  onKeyPress={(evt) => {
-                    if (evt.key === 'Enter') {
-                      if (this.checkValidUsername()) {
-                        this.signinButton.click();
-                      }
-                    }
-                  }}
-                  onChange={(evt) => this.setState({
-                    username: this.usernameField.value,
-                  })}
+                <Tooltip
+                  open={this.state.username.length > 0 && !this.checkValidUsername()}
+                  placement='bottom'
+                  title={'Invalid Characters: \'' + this.state.username.replace(/[a-zA-Z0-9]/g, '') + '\''}
+                  enterDelay={500}
                 >
-                </TextField>
+                  <TextField
+                    id='username-field'
+                    className={classes.textfield}
+                    type='text'
+                    error={!this.checkValidUsername()}
+                    value={this.state.username}
+                    autoFocus={true}
+                    required={true}
+                    helperText='USERNAME'
+                    onKeyPress={(evt) => {
+                      if (evt.key === 'Enter') {
+                        if (this.checkValidUsername()) {
+                          this.signinButton.click();
+                        }
+                      }
+                    }}
+                    onChange={(evt) => {
+                      const value = evt.target.value;
+                      if (value.length <= MAX_USERNAME_LENGTH) {
+                        this.setState({
+                          username: value,
+                        });
+                      }
+                    }}
+                  >
+                  </TextField>
+                </Tooltip>
                 <Button 
                   id='signin-button'
                   className={classes.button}
