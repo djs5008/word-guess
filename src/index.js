@@ -10,6 +10,7 @@ import MainMenu from './js/components/menu';
 import CreateMenu from './js/components/create-menu';
 import JoinMenu from './js/components/join-menu';
 import Loading from './js/components/loading';
+import Game from './js/components/game';
 
 const MAX_LOADING_TIME = 5000;
 
@@ -68,7 +69,6 @@ class App extends Component {
       setTimeout(() => {
         clearTimeout(this.state.loadTimer);
         this.setState({
-          activeState: undefined,
           loadTimer: undefined,
         });
       }, 0);
@@ -79,18 +79,32 @@ class App extends Component {
     let username = sessionStorage.getItem('username');
     this.startLoading(false, 'Welcome ' + username + '!\nSigning in...');
     Client.register(username, () => {
-      this.showMenu();
+      this.loadMenu();
     });
   }
 
-  showMenu() {
-    this.cancelLoading();
+  loadMenu() {
     setTimeout(() => {
+      // Check if they are registered
       Client.registered((result) => {
         if (result) {
-          this.setState({
-            activeState: 'menu',
-            shownName: true,
+          this.startLoading(false, 'Loading...');
+          // Check if they are currently in a game
+          Client.getCurrentGame((gameID) => {
+            if (gameID !== null) {
+              // Join currently active game
+              this.startLoading(false, 'Joining game...');
+              Client.state.activeLobby = gameID;
+              Client.joinLobby(gameID, null, (status) => {
+                if (status) {
+                  this.showGameLobby();
+                } else {
+                  this.showMenu();
+                }
+              })
+            } else {              
+              this.showMenu();
+            }
           });
         } else {
           if (Client.shouldAutoRegister()) {
@@ -99,6 +113,16 @@ class App extends Component {
             this.signOut();
           }
         }
+      });
+    }, 0);
+  }
+
+  showMenu() {
+    this.cancelLoading();
+    setTimeout(() => {
+      this.setState({
+        activeState: 'menu',
+        shownName: true,
       });
     }, 0);
   }
@@ -194,11 +218,20 @@ class App extends Component {
             showMenu={this.showMenu}
           />
         );
+      case 'game':
+        return (
+          <Game
+            lobbyID={Client.state.activeLobby}
+            leaveGame={Client.leaveLobby}
+            showMenu={this.showMenu}
+            startLoading={this.startLoading}
+          />
+        );
       case 'loading':
       default:
         return (
           <Loading 
-            loading={this.state.activeState === 'loading'}
+            loading={['loading', undefined].includes(this.state.activeState)}
             loadingText={this.state.loadingText}
             cancellable={this.state.loadingCancellable}
             showMenu={this.showMenu}

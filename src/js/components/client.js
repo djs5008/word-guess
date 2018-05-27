@@ -1,7 +1,7 @@
 import openSocket from 'socket.io-client';
 import uuid from 'uuid/v4';
 
-const socket = openSocket('http://localhost:3001/', {
+const socket = openSocket('http://173.45.190.215:3001/', {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
@@ -14,6 +14,7 @@ let state = {
   registering: false,
   reconnecting: false,
   lobbies: [],
+  activeLobby: undefined,
 };
 
 function shouldAutoRegister() {
@@ -64,12 +65,12 @@ function registered(cb) {
 }
 
 function unregister() {
+  socket.off('lobbies');
+  socket.emit('unregister', state.userID);
   state.username = null;
   state.userID = null;
   sessionStorage.removeItem('username');
   sessionStorage.removeItem('userID');
-  socket.off('lobbies');
-  socket.emit('unregister');
 }
 
 function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) {
@@ -78,19 +79,30 @@ function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) 
       cb(status);
     });
   });
-  socket.emit('createlobby', lobbyName, maxPlayers, rounds, privateLobby, password);
+  socket.emit('createlobby', state.userID, lobbyName, maxPlayers, rounds, privateLobby, password);
 }
 
 function joinLobby(lobbyID, password, cb) {
   socket.once('joined', (status) => {
+    state.activeLobby = (status) ? lobbyID : undefined;
     cb(status);
   });
-  socket.emit('joining', lobbyID, password);
+  socket.emit('joining', state.userID, lobbyID, password);
 }
 
-function leaveLobby(lobbyID, cb) {
-  socket.once('left', () => cb());
-  socket.emit('leaving', lobbyID);
+function leaveLobby(cb) {
+  socket.once('left', () => {
+    state.activeLobby = undefined;
+    cb();
+  });
+  socket.emit('leaving', state.userID);
 }
 
-export { shouldAutoRegister, register, unregister, registered, createLobby, joinLobby, leaveLobby, state };
+function getCurrentGame(cb) {
+  socket.once('retrievegame_status', (status) => {
+    cb(status);
+  });
+  socket.emit('retrievegame', state.userID);
+}
+
+export { shouldAutoRegister, register, unregister, registered, createLobby, joinLobby, leaveLobby, getCurrentGame, state };

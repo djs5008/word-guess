@@ -2,11 +2,18 @@ const io = require('socket.io')();
 const uuid = require('uuid/v4');
 const port = 3001;
 
+const REGISTER_DELAY = 750;
+const CREATE_DELAY = 1000;
+const JOIN_DELAY = 1000;
+const LEAVE_DELAY = 500;
+const RETRIEVE_GAME_DELAY = 100;
+const LOBBY_DISPATCH_INTERVAL = 500;
+
 let users = {};
 class SessionData {
-  constructor(username, userID) {
+  constructor(socketID, username) {
+    this.socketID = socketID;
     this.username = username;
-    this.userID = userID;
     this.connectedGame = undefined;
     this.lobbyDispatcher = undefined;
   }
@@ -23,7 +30,8 @@ class SessionData {
 let lobbies = {};
 let lobbyPasswords = {};
 class LobbyData {
-  constructor(lobbyName, maxPlayers, rounds, privateLobby) {
+  constructor(creatorID, lobbyName, maxPlayers, rounds, privateLobby) {
+    this.creatorID = creatorID;
     this.lobbyName = lobbyName;
     this.maxPlayers = maxPlayers;
     this.rounds = rounds;
@@ -40,102 +48,134 @@ class LobbyData {
   }
 }
 
-function registerUser(username, userID, socket) {
-  setTimeout(() => {
-    console.log('Client: \'' + username + '\'(' + userID + ') Registered!');
-    users[socket.id] = new SessionData(username, userID);
-    users[socket.id].lobbyDispatcher = setInterval(() => {
-      socket.emit('lobbies', lobbies);
-    }, 500);
-    socket.emit('registered');
-  }, 750);
+function getUserID(socketID) {
+  let result = undefined;
+  Object.keys(users).forEach(userID => {
+    if (users[userID] !== null) {
+      if (users[userID].socketID === socketID) {
+        result = userID;
+        return;
+      }
+    }
+  });
+  return result;
 }
 
-function unregisterUser(socket) {
-  let sessionData = users[socket.id];
+function registerUser(socket, username, userID) {
+  setTimeout(() => {
+    if (users[userID] === undefined || users[userID] === null) {
+      users[userID] = new SessionData(socket.id, username);
+    }
+    users[userID].lobbyDispatcher = setInterval(() => {
+      socket.emit('lobbies', lobbies);
+    }, LOBBY_DISPATCH_INTERVAL);
+    socket.emit('registered');
+    console.log('Client: \'' + username + '\'(' + userID + ') Registered!');
+  }, REGISTER_DELAY);
+}
+
+function unregisterUser(socket, userID, disconnect) {
+  let sessionData = users[userID];
   if (sessionData !== undefined && sessionData !== null) {
-    console.log('Client: \'' + sessionData.username + '\'(' + sessionData.userID + ') Unregistered!');
-    clearInterval(users[socket.id].lobbyDispatcher);
-    users[socket.id] = null;
+    clearInterval(users[userID].lobbyDispatcher);
+    if (disconnect) {
+      console.log('Client: \'' + sessionData.username + '\'(' + userID + ') Disconnected!');
+    } else {
+      console.log('Client: \'' + sessionData.username + '\'(' + userID + ') Unregistered!');
+      users[userID] = null;
+    }
   }
 }
 
 function checkRegistration(socket, userID) {
-  let sessionData = users[socket.id];
+  let sessionData = users[userID];
   socket.emit('registration_check', (sessionData !== undefined && sessionData !== null));
 }
 
-function createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password) {
-  let sessionData = users[socket.id];
+function createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby, password) {
+  let sessionData = users[userID];
   if (sessionData !== undefined && sessionData !== null) {
     setTimeout(() => {
       let lobbyID = uuid().toString().replace(/-/g, '');
-      lobbies[lobbyID] = new LobbyData(lobbyName, maxPlayers, rounds, privateLobby);
+      lobbies[lobbyID] = new LobbyData(userID, lobbyName, maxPlayers, rounds, privateLobby);
       lobbyPasswords[lobbyID] = password;
       socket.emit('lobbycreated', lobbyID);
-      console.log('Created Lobby: ' + lobbyID);
-    }, 1000);
+      console.log('Lobby Created: ' + lobbyID);
+    }, CREATE_DELAY);
   }
 }
 
-function joinGame(socket, lobbyID, password) {
-  let sessionData = users[socket.id];
+function joinGame(socket, userID, lobbyID, password) {
+  let sessionData = users[userID];
   let lobby = lobbies[lobbyID];
   if (sessionData !== undefined && sessionData !== null) {
     if (lobby !== undefined && lobby !== null) {
-      if (!lobby.privateLobby || lobbyPasswords[lobbyID] === password) {
+      if (!lobby.privateLobby || lobby.connectedUsers.includes(userID) || lobbyPasswords[lobbyID] === password) {
         setTimeout(() => {
           // Tell the client they joined
           socket.emit('joined', true);
 
           // Set the client join data
           sessionData.joinGame(lobbyID);
-          lobby.connect(sessionData.userID);
+          lobby.connect(userID);
 
-          console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Joined Lobby: ' + lobbyID);
-        }, 1000);
+          console.log('User \'' + sessionData.username + '\'(' + userID + ') Joined Lobby: ' + lobbyID);
+        }, JOIN_DELAY);
       } else {
         setTimeout(() => {
           // Tell the client they had the wrong password
           socket.emit('joined', false);
-        }, 1000);
+        }, JOIN_DELAY);
       }
     }
   }
 }
 
-function leaveGame(socket, disconnect) {
-  let sessionData = users[socket.id];
-  // Ensure they are signed in and in a game
+function leaveGame(socket, userID, disconnect) {
+  let sessionData = users[userID];
   if (sessionData !== null && sessionData !== undefined) {
-    if (sessionData.connectedGame !== undefined) {
+    let lobby = lobbies[sessionData.connectedGame];
+    if (lobby !== null && lobby !== undefined) {
       setTimeout(() => {
         // Tell the client they left
         socket.emit('left');
-        console.log('User \'' + sessionData.username + '\'(' + sessionData.userID + ') Left Lobby: ' + sessionData.connectedGame);
 
         // Disconnect the client from their lobby
-        lobbies[sessionData.connectedGame].disconnect(sessionData.userID);
+        lobby.disconnect(userID);
 
-        // Don't remove session data if they just refreshed page
-        if (!disconnect) {
+        if (disconnect) {
+          // Don't remove session data if they just refreshed page
+          console.log('User \'' + sessionData.username + '\'(' + userID + ') Disconnected from Lobby: ' + sessionData.connectedGame);
+        } else {
+          // Remove user's session data
           sessionData.leaveGame();
+          console.log('User \'' + sessionData.username + '\'(' + userID + ') Left Lobby: ' + sessionData.connectedGame);
         }
-      }, 1000);
+      }, LEAVE_DELAY);
     }
   }
 }
 
+function getCurrentGame(socket, userID) {
+  let sessionData = users[userID];
+  if (sessionData !== null && sessionData !== undefined) {
+    setTimeout(() => {
+      socket.emit('retrievegame_status', sessionData.connectedGame);
+    }, RETRIEVE_GAME_DELAY);
+  }
+}
+
 io.on('connection', (socket) => {
-  socket.on('register', (username, userID) => registerUser(username, userID, socket));
-  socket.on('unregister', () => unregisterUser(socket));
+  socket.on('register', (username, userID) => registerUser(socket, username, userID));
+  socket.on('unregister', (userID) => unregisterUser(socket, userID, false));
   socket.on('checkRegistration', (userID) => checkRegistration(socket, userID));
-  socket.on('createlobby', (lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, lobbyName, maxPlayers, rounds, privateLobby, password));
-  socket.on('joining', (lobbyID, password) => joinGame(socket, lobbyID, password));
-  socket.on('leaving', () => leaveGame(socket, false));
+  socket.on('createlobby', (userID, lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby, password));
+  socket.on('joining', (userID, lobbyID, password) => joinGame(socket, userID, lobbyID, password));
+  socket.on('leaving', (userID) => leaveGame(socket, userID, false));
+  socket.on('retrievegame', (userID) => getCurrentGame(socket, userID));
   socket.on('disconnect', () => {
-    leaveGame(socket, true);
-    unregisterUser(socket);
+    leaveGame(socket, getUserID(socket.id), true);
+    unregisterUser(socket, getUserID(socket.id), true);
   });
 });
 
