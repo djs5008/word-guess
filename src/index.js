@@ -27,6 +27,7 @@ class App extends Component {
       players: undefined,
       shownName: false,
       sessionTimer: undefined,
+      createdLobby: false,
     };
 
     this.showMenu = this.showMenu.bind(this);
@@ -45,6 +46,7 @@ class App extends Component {
         this.setState({
           lobbies: Client.state.lobbies,
           players: Client.state.players,
+          createdLobby: Client.state.createdLobby,
         });
         if (Client.state.reconnecting) {
           this.startLoading(false, 'Reconnecting...');
@@ -223,6 +225,7 @@ class App extends Component {
             shown={true}
             players={Client.state.players}
             lobbyID={Client.state.activeLobby}
+            created={this.state.createdLobby}
             leaveGame={Client.leaveLobby}
             showMenu={this.showMenu}
             startLoading={this.startLoading}

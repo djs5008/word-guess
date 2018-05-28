@@ -15,6 +15,7 @@ let state = {
   lobbies: [],
   players: [],
   activeLobby: undefined,
+  createdLobby: false,
 };
 
 function shouldAutoRegister() {
@@ -68,12 +69,14 @@ function unregister() {
   socket.emit('unregister', state.userID);
   state.username = null;
   state.userID = null;
+  state.created = false;
   sessionStorage.removeItem('username');
   sessionStorage.removeItem('userID');
 }
 
 function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) {
   socket.once('lobbycreated', (lobbyID) => {
+    state.createdLobby = true;
     cb(lobbyID);
   });
   socket.emit('createlobby', state.userID, lobbyName, maxPlayers, rounds, privateLobby, password);
@@ -87,6 +90,7 @@ function joinLobby(lobbyID, password, cb) {
         state.players = players;
       });
       socket.off('lobbies');
+      getCurrentGame(()=>{});
     }
     cb(status);
   });
@@ -101,13 +105,15 @@ function leaveLobby(cb) {
     });
     state.activeLobby = undefined;
     state.players = [];
+    state.createdLobby = false;
     cb();
   });
   socket.emit('leaving', state.userID);
 }
 
 function getCurrentGame(cb) {
-  socket.once('retrievegame_status', (status) => {
+  socket.once('retrievegame_status', (status, created) => {
+    state.createdLobby = created;
     cb(status);
   });
   socket.emit('retrievegame', state.userID);

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { List, Typography, Divider, Button, Icon, Slide, Grid, ListItem, Avatar, Paper } from '@material-ui/core';
+import { List, Typography, Divider, Button, Icon, Slide, Grid, Paper, Hidden } from '@material-ui/core';
+import PlayerControlButton from './player-control-button';
 
 const ANIM_SLIDE_TIME = 500;
 // const DRAWER_WIDTH = 200;
@@ -39,19 +40,15 @@ const styles = theme => ({
     height: '94%',
     overflow: 'hidden',
   },
+  controlHeader: {
+    margin: 5,
+    fontSize: '1.8vmin',
+  },
   controlButton: {
     opacity: 1,
-  },
-  playerButton: {
-    width: '100%',
-    paddingBottom: 2,
-    paddingTop: 2,
-    paddingLeft: 0,
-    paddingRight: 0,
-    opacity: 1,
-  },
-  avatar: {
-    marginRight: 10,
+    minWidth: 0,
+    overflow: 'hidden',
+    marginBottom: 5,
   },
 });
 
@@ -62,27 +59,38 @@ class Game extends Component {
     this.state = {
       shown: false,
       lobbyID: props.lobbyID,
+      created: props.created,
+      openControl: -1,
       players: [],
     };
     this.leaveGame = this.leaveGame.bind(this);
+    this.setControlOpen = this.setControlOpen.bind(this);
+    this.startGame = this.startGame.bind(this);
+  }
+
+  setControlOpen(id) {
+    setTimeout(() => {
+      this.setState({
+        openControl: id,
+      });
+    }, 0);
   }
 
   getConnectedPlayers() {
-    const { classes } = this.props;
     let items = [];
     let id = 0;
     this.state.players.forEach(player => {
       items.push(
-        <ListItem key={player + id++} className={classes.playerButton}>
-          <Button
-            color='primary'
-            fullWidth
-          >
-            <Avatar className={classes.avatar}>{player.split('')[0]}</Avatar>
-            <Typography variant='body2' color='textSecondary' align='center'>{player}</Typography>
-          </Button>
-        </ListItem>
+        <PlayerControlButton 
+          id={id} 
+          key={player + id} 
+          player={player} 
+          created={this.state.created} 
+          open={this.state.openControl === id}
+          setControlOpen={this.setControlOpen}
+        />
       );
+      id++;
     });
     return (
       <List>
@@ -100,10 +108,39 @@ class Game extends Component {
     }, 0);
   }
 
+  startGame() {
+
+  }
+
+  showStartButton() {
+    const { classes } = this.props;
+    let result = null;
+
+    if (this.state.created) {
+      result = (
+        <Button
+          className={classes.controlButton}
+          variant='raised'
+          color='primary'
+          fullWidth
+          onClick={this.startGame}
+        >
+          <Hidden xsDown>
+            <Typography variant='button' color='textSecondary'>Start&nbsp;</Typography>
+          </Hidden>
+          <Icon>play_circle_filled</Icon>
+        </Button>
+      );
+    }
+
+    return (result);
+  }
+
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
       players: props.players,
+      created: props.created,
     });
   }
 
@@ -119,9 +156,7 @@ class Game extends Component {
             timeout={ANIM_SLIDE_TIME}
           >
             <Paper className={classes.paper}>
-              <br/>
-              <Typography variant='body2' align='center'>Connected Players:</Typography>
-              <br/>
+              <Typography className={classes.controlHeader} variant='body2' align='center'>Connected Players:</Typography>
               <Divider/>
               <div className={classes.content}>
                 <div>
@@ -130,6 +165,7 @@ class Game extends Component {
               </div>
               <div className={classes.controls}>
                 <Divider/>
+                {this.showStartButton()}
                 <Button
                   className={classes.controlButton}
                   variant='raised'
@@ -138,7 +174,9 @@ class Game extends Component {
                   onClick={this.leaveGame}
                 >
                   <Icon className={classes.iconAlign}>meeting_room</Icon>
-                  <Typography variant='button' color='textSecondary'>&nbsp;Leave</Typography>
+                  <Hidden xsDown>
+                    <Typography variant='button' color='textSecondary'>&nbsp;Leave</Typography>
+                  </Hidden>
                 </Button>
               </div>
             </Paper>

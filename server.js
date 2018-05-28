@@ -186,7 +186,12 @@ function getCurrentGame(socket, userID) {
   let sessionData = users[userID];
   if (sessionData !== null && sessionData !== undefined) {
     setTimeout(() => {
-      socket.emit('retrievegame_status', sessionData.connectedGame);
+      let lobby = lobbies[sessionData.connectedGame];
+      let creatorID = undefined;
+      if (lobby !== undefined && lobby !== null) {
+        creatorID = lobby.creatorID;
+      }
+      socket.emit('retrievegame_status', sessionData.connectedGame, creatorID === userID);
     }, RETRIEVE_GAME_DELAY);
   }
 }
