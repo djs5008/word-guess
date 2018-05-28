@@ -24,6 +24,7 @@ class App extends Component {
       loadingCancellable: false,
       loadTimer: undefined,
       lobbies: undefined,
+      players: undefined,
       shownName: false,
       sessionTimer: undefined,
     };
@@ -43,13 +44,14 @@ class App extends Component {
       sessionTimer: setInterval(() => {
         this.setState({
           lobbies: Client.state.lobbies,
+          players: Client.state.players,
         });
         if (Client.state.reconnecting) {
           this.startLoading(false, 'Reconnecting...');
         } else {
           if (this.state.activeState === 'loading'
             && this.state.loadingText === 'Reconnecting...') {
-            this.showMenu();
+            this.loadMenu();
           }
         }
       }, 500),
@@ -178,11 +180,7 @@ class App extends Component {
   }
 
   componentWillMount() {
-    if (Client.shouldAutoRegister()) {
-      this.autoRegister();
-    } else {
-      this.signOut();
-    }
+    this.loadMenu();
   }
 
   getCurrentState() {
@@ -190,7 +188,7 @@ class App extends Component {
       case 'signin':
         return (
           <SignIn 
-            shown={this.state.activeState === 'signin'}
+            shown={true}
             register={Client.register}
             showMenu={this.showMenu}
             startLoading={this.startLoading}
@@ -199,8 +197,9 @@ class App extends Component {
       case 'createmenu': 
         return (
           <CreateMenu 
-            shown={this.state.activeState === 'createmenu'}
+            shown={true}
             createLobby={Client.createLobby}
+            joinLobby={Client.joinLobby}
             startLoading={this.startLoading}
             showMenu={this.showMenu}
             showGameLobby={this.showGameLobby}
@@ -209,7 +208,7 @@ class App extends Component {
       case 'joinmenu':
         return (
           <JoinMenu 
-            shown={this.state.activeState === 'joinmenu'}
+            shown={true}
             lobbies={this.state.lobbies}
             joinLobby={Client.joinLobby}
             startLoading={this.startLoading}
@@ -221,6 +220,8 @@ class App extends Component {
       case 'game':
         return (
           <Game
+            shown={true}
+            players={Client.state.players}
             lobbyID={Client.state.activeLobby}
             leaveGame={Client.leaveLobby}
             showMenu={this.showMenu}
@@ -231,12 +232,12 @@ class App extends Component {
       default:
         return (
           <Loading 
-            loading={['loading', undefined].includes(this.state.activeState)}
+            loading={true}
             loadingText={this.state.loadingText}
             cancellable={this.state.loadingCancellable}
             showMenu={this.showMenu}
             cancelLoading={this.cancelLoading}
-            hidden={this.state.activeState !== 'loading'}
+            hidden={this.state.activeState !== 'loading' && this.state.activeState !== undefined}
           />
         );
     }

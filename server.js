@@ -8,6 +8,7 @@ const JOIN_DELAY = 1000;
 const LEAVE_DELAY = 500;
 const RETRIEVE_GAME_DELAY = 100;
 const LOBBY_DISPATCH_INTERVAL = 500;
+const PLAYER_DISPATCH_INTERVAL = 250;
 
 let users = {};
 class SessionData {
@@ -16,6 +17,7 @@ class SessionData {
     this.username = username;
     this.connectedGame = undefined;
     this.lobbyDispatcher = undefined;
+    this.playerDispatcher = undefined;
   }
 
   joinGame(gameID) {
@@ -48,8 +50,17 @@ class LobbyData {
   }
 }
 
+function getConnectedUsernames(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  let result = [];
+  lobby.connectedUsers.forEach(userID => {
+    result.push(users[userID].username);
+  });
+  return result;
+}
+
 function getUserID(socketID) {
-  let result = undefined;
+  let result = null;
   Object.keys(users).forEach(userID => {
     if (users[userID] !== null) {
       if (users[userID].socketID === socketID) {
@@ -66,9 +77,16 @@ function registerUser(socket, username, userID) {
     if (users[userID] === undefined || users[userID] === null) {
       users[userID] = new SessionData(socket.id, username);
     }
+
+    // Setup lobby dispatcher interval
     users[userID].lobbyDispatcher = setInterval(() => {
       socket.emit('lobbies', lobbies);
     }, LOBBY_DISPATCH_INTERVAL);
+
+    // Setup new socket ID (refreshes each page visit)
+    users[userID].socketID = socket.id;
+    
+    // Alert client of successful registration
     socket.emit('registered');
     console.log('Client: \'' + username + '\'(' + userID + ') Registered!');
   }, REGISTER_DELAY);
@@ -77,7 +95,7 @@ function registerUser(socket, username, userID) {
 function unregisterUser(socket, userID, disconnect) {
   let sessionData = users[userID];
   if (sessionData !== undefined && sessionData !== null) {
-    clearInterval(users[userID].lobbyDispatcher);
+    clearInterval(sessionData.lobbyDispatcher);
     if (disconnect) {
       console.log('Client: \'' + sessionData.username + '\'(' + userID + ') Disconnected!');
     } else {
@@ -110,7 +128,9 @@ function joinGame(socket, userID, lobbyID, password) {
   let lobby = lobbies[lobbyID];
   if (sessionData !== undefined && sessionData !== null) {
     if (lobby !== undefined && lobby !== null) {
-      if (!lobby.privateLobby || lobby.connectedUsers.includes(userID) || lobbyPasswords[lobbyID] === password) {
+      if (!lobby.privateLobby 
+          || lobby.connectedUsers.includes(userID) 
+          || lobbyPasswords[lobbyID] === password) {
         setTimeout(() => {
           // Tell the client they joined
           socket.emit('joined', true);
@@ -118,6 +138,10 @@ function joinGame(socket, userID, lobbyID, password) {
           // Set the client join data
           sessionData.joinGame(lobbyID);
           lobby.connect(userID);
+
+          users[userID].playerDispatcher = setInterval(() => {
+            socket.emit('connectedPlayers', getConnectedUsernames(lobbyID));
+          }, PLAYER_DISPATCH_INTERVAL);
 
           console.log('User \'' + sessionData.username + '\'(' + userID + ') Joined Lobby: ' + lobbyID);
         }, JOIN_DELAY);
@@ -142,6 +166,8 @@ function leaveGame(socket, userID, disconnect) {
 
         // Disconnect the client from their lobby
         lobby.disconnect(userID);
+
+        clearInterval(sessionData.playerDispatcher);
 
         if (disconnect) {
           // Don't remove session data if they just refreshed page

@@ -81,12 +81,16 @@ class CreateMenu extends Component {
       this.state.maxPlayers, 
       this.state.rounds, 
       this.state.private, 
-      this.state.password, (status) => {
-        if (status) {
-          this.props.showGameLobby();
-        } else {
-          this.props.showMenu();
-        }
+      this.state.password, 
+      (lobbyID) => {
+        this.props.startLoading(true, 'Joining game...');
+        this.props.joinLobby(lobbyID, this.state.password, (status) => {
+          if (status) {
+            this.props.showGameLobby();
+          } else {
+            this.props.showMenu();
+          }
+        });
     });
   }
 

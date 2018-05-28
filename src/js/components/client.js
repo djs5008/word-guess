@@ -1,7 +1,7 @@
 import openSocket from 'socket.io-client';
 import uuid from 'uuid/v4';
 
-const socket = openSocket('http://173.45.190.215:3001/', {
+const socket = openSocket('http://localhost:3001/', {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
@@ -11,9 +11,9 @@ const socket = openSocket('http://173.45.190.215:3001/', {
 let state = {
   username: null,
   userID: null,
-  registering: false,
   reconnecting: false,
   lobbies: [],
+  players: [],
   activeLobby: undefined,
 };
 
@@ -35,7 +35,6 @@ function register(username, cb) {
   socket.once('registered', () => {
     state.username = sessionStorage.getItem('username');
     state.userID = sessionStorage.getItem('userID');
-    state.registering = false;
     cb();
   });
 
@@ -75,16 +74,20 @@ function unregister() {
 
 function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) {
   socket.once('lobbycreated', (lobbyID) => {
-    joinLobby(lobbyID, password, (status) => {
-      cb(status);
-    });
+    cb(lobbyID);
   });
   socket.emit('createlobby', state.userID, lobbyName, maxPlayers, rounds, privateLobby, password);
 }
 
 function joinLobby(lobbyID, password, cb) {
   socket.once('joined', (status) => {
-    state.activeLobby = (status) ? lobbyID : undefined;
+    if (status) {
+      state.activeLobby = lobbyID;
+      socket.on('connectedPlayers', (players) => {
+        state.players = players;
+      });
+      socket.off('lobbies');
+    }
     cb(status);
   });
   socket.emit('joining', state.userID, lobbyID, password);
@@ -92,7 +95,12 @@ function joinLobby(lobbyID, password, cb) {
 
 function leaveLobby(cb) {
   socket.once('left', () => {
+    socket.off('connectedPlayers');
+    socket.on('lobbies', (lobbies) => {
+      state.lobbies = lobbies;
+    });
     state.activeLobby = undefined;
+    state.players = [];
     cb();
   });
   socket.emit('leaving', state.userID);
