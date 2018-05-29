@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { List, Typography, Divider, Button, Icon, Slide, Grid, Paper, Hidden } from '@material-ui/core';
 import PlayerControlButton from './player-control-button';
+import Canvas from './canvas';
 
 const ANIM_SLIDE_TIME = 500;
 // const DRAWER_WIDTH = 200;
@@ -183,7 +184,7 @@ class Game extends Component {
           </Slide>
         </Grid>
         <Grid item xs={10}>
-
+          <Canvas width='98%' />
         </Grid>
       </Grid>
     );
