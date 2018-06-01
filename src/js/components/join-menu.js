@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { List, ListItem, Typography, Modal, Divider, Grid, Grow } from '@material-ui/core';
 import Lobby from './lobby';
+import * as Client from './client';
 
 const styles = theme => ({
   paper: {
@@ -38,7 +39,8 @@ class JoinMenu extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      lobbies: props.lobbies,
+      lobbies: [],
+      lobbyTimer: undefined,
     };
     this.closeMenu = this.closeMenu.bind(this);
     this.joinLobby = this.joinLobby.bind(this);
@@ -47,8 +49,21 @@ class JoinMenu extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
-      lobbies: props.lobbies,
     });
+  }
+
+  componentDidMount() {
+    this.setState({
+      lobbyTimer: setInterval(() => {
+                    this.setState({
+                      lobbies: Client.state.lobbies,
+                    })
+                  }, 50),
+    });
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.state.lobbyTimer);
   }
 
   closeMenu() {

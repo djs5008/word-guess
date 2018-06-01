@@ -8,7 +8,7 @@ const socket = openSocket('http://localhost:3001/', {
   reconnectionAttempts: Infinity
 });
 
-let state = {
+const state = {
   username: null,
   userID: null,
   reconnecting: false,
@@ -16,6 +16,9 @@ let state = {
   players: [],
   activeLobby: undefined,
   createdLobby: false,
+  lineBuffer: [],
+  mousePos: {},
+  mutedUsers: [],
 };
 
 function shouldAutoRegister() {
@@ -44,6 +47,12 @@ function register(username, cb) {
     state.lobbies = lobbies;
   });
 
+  socket.on('line', (line) => addToLines(line));
+
+  socket.on('mousePos', (userID, x, y, color, size) => {
+    state.mousePos[userID] = {x, y, color, size};
+  });
+
   // Subscribe to disconnection handler
   socket.once('disconnect', () => {
     state.reconnecting = true;
@@ -52,6 +61,12 @@ function register(username, cb) {
   socket.once('reconnect', () => {
     state.reconnecting = false;
   });
+
+  socket.on('kick', (reason) => {
+    this.leaveLobby(() => {
+      console.log('kicked reason: ' + reason);
+    });
+  })
 
   // Tell the server we are registering
   socket.emit('register', username, userID);
@@ -66,6 +81,9 @@ function registered(cb) {
 
 function unregister() {
   socket.off('lobbies');
+  socket.off('line');
+  socket.off('mousePos');
+  socket.off('kick');
   socket.emit('unregister', state.userID);
   state.username = null;
   state.userID = null;
@@ -119,4 +137,58 @@ function getCurrentGame(cb) {
   socket.emit('retrievegame', state.userID);
 }
 
-export { shouldAutoRegister, register, unregister, registered, createLobby, joinLobby, leaveLobby, getCurrentGame, state };
+function kickUser(userID, cb) {
+  socket.once('kicked', (userID) => {
+    cb(userID);
+  });
+  socket.emit('kickuser', state.userID, userID);
+}
+
+function banUser(userID, cb) {
+  socket.once('kicked', (userID) => {
+    cb(userID);
+  });
+  socket.emit('banuser', state.userID, userID);
+}
+
+function getLines() {
+  return state.lineBuffer;
+}
+
+function addToLines(line) {
+  state.lineBuffer.push(line);
+}
+
+function removeLine(line) {
+  state.lineBuffer = state.lineBuffer.filter(item => item !== line);
+}
+
+function sendLine(line) {
+  socket.emit('line', state.userID, line);
+}
+
+function sendMouse(x, y, color, size) {
+  socket.emit('mousePos', state.userID, x, y, color, size);
+}
+
+export { 
+  shouldAutoRegister, 
+  register, 
+  unregister, 
+  registered, 
+  
+  createLobby, 
+  joinLobby, 
+  leaveLobby, 
+  getCurrentGame, 
+
+  getLines,
+  addToLines,
+  removeLine,
+  sendLine,
+  sendMouse,
+  kickUser,
+  banUser,
+
+  state,
+};

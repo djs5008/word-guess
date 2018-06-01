@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid } from '@material-ui/core';
+import * as Client from './client';
 
 const styles = theme => ({
   avatar: {
@@ -36,13 +37,25 @@ class PlayerControlButton extends Component {
     super(props);
     this.state = {
       id: props.id,
-      player: props.player,
+      playerInfo: props.playerInfo,
       created: props.created,
       open: false,
     };
   }
 
-  getControlItems() {
+  kickUser() {
+    Client.kickUser(this.state.playerInfo.userID, (userID) => {
+      console.log('kicked user: ' + this.state.playerInfo.username);
+    });
+  }
+
+  banUser() {
+    Client.banUser(this.state.playerInfo.userID, (userID) => {
+      console.log('banned user: ' + this.state.playerInfo.username);
+    });
+  }
+
+  getControlItems(playerInfo) {
 
     const { classes } = this.props;
     let items = [];
@@ -56,12 +69,12 @@ class PlayerControlButton extends Component {
     if (this.state.created) {
       items.push(
         <ListItem key={2} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Kick" />
+          <ListItemText className={classes.controlOption} primary="Kick" onClick={this.kickUser()} />
         </ListItem>
       );
       items.push(
         <ListItem key={3} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Ban" />
+          <ListItemText className={classes.controlOption} primary="Ban" onClick={this.kickUser()} />
         </ListItem>
       );
     }
@@ -85,7 +98,7 @@ class PlayerControlButton extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <Grid container justify='center' alignContent='center' alignItems='center' key={this.state.player}>
+      <Grid container justify='center' alignContent='center' alignItems='center' key={this.state.playerInfo.userID}>
         <Grid item xs={12}>
           <ListItem className={classes.playerButtonContainer}>
             <Button
@@ -98,11 +111,11 @@ class PlayerControlButton extends Component {
             >
               <Grid container justify='center' alignContent='center' alignItems='center'>
                 <Grid item xs={4}>
-                  <Avatar className={classes.avatar}>{this.state.player.split('')[0]}</Avatar>
+                  <Avatar className={classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
                 </Grid>
                 <Grid item xs={6}>
                   <Hidden smDown>
-                    <Typography variant='body2' color='textSecondary' align='left'>{this.state.player}</Typography>
+                    <Typography variant='body2' color='textSecondary' align='left'>{this.state.playerInfo.username}</Typography>
                   </Hidden>
                 </Grid>
               </Grid>

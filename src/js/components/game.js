@@ -3,9 +3,10 @@ import { withStyles } from '@material-ui/core/styles';
 import { List, Typography, Divider, Button, Icon, Slide, Grid, Paper, Hidden } from '@material-ui/core';
 import PlayerControlButton from './player-control-button';
 import Canvas from './canvas';
+import * as Client from './client'
+import Chat from './chat';
 
 const ANIM_SLIDE_TIME = 500;
-// const DRAWER_WIDTH = 200;
 
 const styles = theme => ({
   root: {
@@ -58,10 +59,11 @@ class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      shown: false,
+      shown: props.shown,
       lobbyID: props.lobbyID,
       created: props.created,
       openControl: -1,
+      playerMaintainer: undefined,
       players: [],
     };
     this.leaveGame = this.leaveGame.bind(this);
@@ -80,12 +82,12 @@ class Game extends Component {
   getConnectedPlayers() {
     let items = [];
     let id = 0;
-    this.state.players.forEach(player => {
+    this.state.players.forEach(playerInfo => {
       items.push(
         <PlayerControlButton 
           id={id} 
-          key={player + id} 
-          player={player} 
+          key={playerInfo.username + id} 
+          playerInfo={playerInfo} 
           created={this.state.created} 
           open={this.state.openControl === id}
           setControlOpen={this.setControlOpen}
@@ -140,9 +142,22 @@ class Game extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
-      players: props.players,
       created: props.created,
     });
+  }
+
+  componentDidMount() {
+    this.setState({
+      playerMaintainer: setInterval(() => {
+        this.setState({
+          players: Client.state.players,
+        });
+      }, 500),
+    });
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.state.playerMaintainer);
   }
 
   render() {
@@ -184,7 +199,16 @@ class Game extends Component {
           </Slide>
         </Grid>
         <Grid item xs={10}>
-          <Canvas width='98%' />
+          <div>  
+            <Grid container>
+              <Grid item xs={12}>
+                <Canvas />
+              </Grid>
+              <Grid item xs={12}>
+                <Chat />
+              </Grid>
+            </Grid>
+          </div>  
         </Grid>
       </Grid>
     );

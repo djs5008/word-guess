@@ -39,6 +39,7 @@ class LobbyData {
     this.rounds = rounds;
     this.privateLobby = privateLobby;
     this.connectedUsers = [];
+    this.bannedUsers = [];
   }
 
   connect(userID) {
@@ -48,13 +49,20 @@ class LobbyData {
   disconnect(userID) {
     this.connectedUsers = this.connectedUsers.filter(id => id !== userID);
   }
+
+  ban(userID) {
+    this.bannedUsers.push(userID);
+  }
 }
 
 function getConnectedUsernames(lobbyID) {
   let lobby = lobbies[lobbyID];
   let result = [];
   lobby.connectedUsers.forEach(userID => {
-    result.push(users[userID].username);
+    result.push({
+      username: users[userID].username,
+      userID: userID,
+    });
   });
   return result;
 }
@@ -131,24 +139,31 @@ function joinGame(socket, userID, lobbyID, password) {
       if (!lobby.privateLobby 
           || lobby.connectedUsers.includes(userID) 
           || lobbyPasswords[lobbyID] === password) {
-        setTimeout(() => {
-          // Tell the client they joined
-          socket.emit('joined', true);
+        if (!lobby.bannedUsers.includes(userID)) {
+          setTimeout(() => {
+            // Tell the client they joined
+            socket.emit('joined', true);
 
-          // Set the client join data
-          sessionData.joinGame(lobbyID);
-          lobby.connect(userID);
+            // Set the client join data
+            sessionData.joinGame(lobbyID);
+            lobby.connect(userID);
 
-          users[userID].playerDispatcher = setInterval(() => {
-            socket.emit('connectedPlayers', getConnectedUsernames(lobbyID));
-          }, PLAYER_DISPATCH_INTERVAL);
+            users[userID].playerDispatcher = setInterval(() => {
+              socket.emit('connectedPlayers', getConnectedUsernames(lobbyID));
+            }, PLAYER_DISPATCH_INTERVAL);
 
-          console.log('User \'' + sessionData.username + '\'(' + userID + ') Joined Lobby: ' + lobbyID);
-        }, JOIN_DELAY);
+            console.log('User \'' + sessionData.username + '\'(' + userID + ') Joined Lobby: ' + lobbyID);
+          }, JOIN_DELAY);
+        } else {
+          setTimeout(() => {
+            // Tell the client they are banned
+            socket.emit('joined', false, 'banned from game lobby');
+          }, JOIN_DELAY);
+        }
       } else {
         setTimeout(() => {
           // Tell the client they had the wrong password
-          socket.emit('joined', false);
+          socket.emit('joined', false, 'invalid password');
         }, JOIN_DELAY);
       }
     }
@@ -196,14 +211,97 @@ function getCurrentGame(socket, userID) {
   }
 }
 
+function kickUser(masterID, userID) {
+  let sessionData = users[userID];
+  if (sessionData !== null && sessionData !== undefined) {
+    let lobby = lobbies[sessionData.connectedGame];
+    let creatorID = undefined;
+    if (lobby !== undefined && lobby !== null) {
+      creatorID = lobby.creatorID;
+    }
+
+    if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
+      let userSocket = io.sockets.connected[sessionData.sessionID];
+      let masterSocket = io.sockets.connect[users[masterID].sessionID];
+      if (userSocket !== undefined && userSocket !== null
+        && masterSocket !== undefined && masterSocket !== null) {
+        lobby.ban(userID);
+        userSocket.emit('kick', userID, 'you have been kicked!');
+        masterSocket.emit('kicked', userID);
+      }
+    }
+  }
+}
+
+function banUser(masterID, userID) {
+  let sessionData = users[userID];
+  if (sessionData !== null && sessionData !== undefined) {
+    let lobby = lobbies[sessionData.connectedGame];
+    let creatorID = undefined;
+    if (lobby !== undefined && lobby !== null) {
+      creatorID = lobby.creatorID;
+    }
+
+    if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
+      let userSocket = io.sockets.connected[sessionData.sessionID];
+      let masterSocket = io.sockets.connect[users[masterID].sessionID];
+      if (userSocket !== undefined && userSocket !== null
+        && masterSocket !== undefined && masterSocket !== null) {
+        lobby.ban(userID);
+        userSocket.emit('kick', userID, 'you have been banned!');
+        masterSocket.emit('kicked', userID);
+      }
+    }
+  }
+}
+
+function echoLine(userID, line) {
+  let user = users[userID];
+  let lobby = lobbies[user.connectedGame];
+  if (lobby !== undefined && lobby !== null) {
+    lobby.connectedUsers.forEach(playerID => {
+      if (userID !== playerID) {
+        let player = users[playerID];
+        let socket = io.sockets.connected[player.socketID];
+        if (socket !== undefined && socket !== null) {
+          io.sockets.connected[player.socketID].emit('line', line);
+        }
+      }
+    });
+  }
+}
+
+function echoMouses(userID, x, y, color, size) {
+  let user = users[userID];
+  let lobby = lobbies[user.connectedGame];
+  if (lobby !== undefined && lobby !== null) {
+    lobby.connectedUsers.forEach(playerID => {
+      if (userID !== playerID) {
+        let player = users[playerID];
+        let socket = io.sockets.connected[player.socketID];
+        if (socket !== undefined && socket !== null) {
+          socket.emit('mousePos', userID, x, y, color, size);
+        }
+      }
+    });
+  }
+}
+
 io.on('connection', (socket) => {
   socket.on('register', (username, userID) => registerUser(socket, username, userID));
   socket.on('unregister', (userID) => unregisterUser(socket, userID, false));
   socket.on('checkRegistration', (userID) => checkRegistration(socket, userID));
+  
   socket.on('createlobby', (userID, lobbyName, maxPlayers, rounds, privateLobby, password) => createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby, password));
   socket.on('joining', (userID, lobbyID, password) => joinGame(socket, userID, lobbyID, password));
   socket.on('leaving', (userID) => leaveGame(socket, userID, false));
   socket.on('retrievegame', (userID) => getCurrentGame(socket, userID));
+  socket.on('banuser', (masterID, userID) => banUser(masterID, userID));
+  socket.on('kickuser', (masterID, userID) => kickUser(masterID, userID));
+
+  socket.on('line', (userID, line) => echoLine(userID, line));
+  socket.on('mousePos', (userID, x, y, color, size) => echoMouses(userID, x, y, color, size));
+
   socket.on('disconnect', () => {
     leaveGame(socket, getUserID(socket.id), true);
     unregisterUser(socket, getUserID(socket.id), true);

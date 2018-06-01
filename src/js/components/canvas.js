@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { withStyles } from '@material-ui/core/styles';
+import * as Client from './client';
 
 const createjs = window.createjs;
 
@@ -9,10 +10,8 @@ const classes = theme => ({
     paddingLeft: 0,
     paddingRight: 0,
     margin: 'auto',
-    display: 'block',
-    height: '100%',
-    width: '90%',
     boxShadow: '3px 3px 10px #000',
+    cursor: 'pointer',
   },
 });
 
@@ -20,96 +19,153 @@ class Canvas extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      color: undefined,
+    this.vars = {
+      color: 'white',
       size: 5,
       drawing: true,
       penDown: false,
+      hue: 0,
     };
   }
 
   componentDidMount() {
-    this.canvas = ReactDOM.findDOMNode(this.refs.canvas);
+    let canvas = ReactDOM.findDOMNode(this.refs.canvas);
 
-    this.stage = new createjs.Stage(this.canvas);
+    this.stage = new createjs.Stage(canvas);
     this.background = new createjs.Shape();
+    this.cursorLayer = new createjs.Shape();
+    this.buffer = new createjs.Container();
+    this.drawArea = new createjs.Shape();
     this.stage.addChild(this.background);
-    this.graphics = this.background.graphics;
+    this.stage.addChild(this.buffer);
+    this.buffer.addChild(this.drawArea);
+    this.stage.addChild(this.cursorLayer);
+    this.stage.mouseMoveOutside = true;
+    
+    createjs.Touch.enable(this.stage, true);
+    createjs.Ticker.on("tick", this.paint.bind(this));
+    createjs.Ticker.framerate = 60;
+    createjs.Ticker.timingMode = createjs.Ticker.RAF_SYNCHED;
 
-    this.lines = [];
-
-    this.fitStage = this.fitStage.bind(this);
-    window.addEventListener('resize', this.fitStage, false);
+    window.addEventListener('resize', this.fitStage.bind(this), false);
     this.fitStage();
 
-    this.fillBackground();
     this.registerMouseEvents();
   }
 
   fillBackground() {
-    this.graphics
-      .beginFill('rgba(255,255,255,0.8)')
+    this.background.graphics.clear();
+    this.background.graphics
+      .beginFill('rgba(0,0,0,0.6)')
       .drawRect(0, 0, this.stage.canvas.width, this.stage.canvas.height)
       .endFill();
+    this.background.uncache();
+    this.background.cache(0, 0, this.stage.canvas.width, this.stage.canvas.height);
     this.stage.update();
   }
 
   fitStage() {
-    this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
-    this.stage.update();
+    this.stage.canvas.width = window.innerWidth * (0.80);
+    this.stage.canvas.height = window.innerHeight * (0.7);
+    this.buffer.uncache();
+    this.buffer.cache(0, 0, this.stage.canvas.width, this.stage.canvas.height);
+    this.fillBackground();
   }
 
   registerMouseEvents() {
     this.oldX = undefined;
     this.oldY = undefined;
 
-    createjs.Touch.enable(this.stage);
-    this.stage.on("stagemousedown", (evt) => this.handleMouseDown(evt));
-    this.stage.on("stagemouseup", (evt) => this.handleMouseUp(evt));
-    this.stage.on("stagemousemove", (evt) => this.handleMouseMove(evt));
+    this.stage.on("stagemousedown", this.handleMouseDown.bind(this));
+    this.stage.on("stagemouseup", this.handleMouseUp.bind(this));
+    this.stage.on("stagemousemove", this.handleMouseMove.bind(this));
   }
   
-  handleMouseUp(evt) {
-    this.setState({
-      color: createjs.Graphics.getHSL(Math.random()*360, 100, 50),
-      penDown: false,
+  handleMouseUp() {
+    this.vars.penDown = false;
+  }
+
+  handleMouseDown() {
+    this.vars.penDown = true;
+
+    let pos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
+    this.oldX = pos.x;
+    this.oldY = pos.y;
+    this.drawLine(pos);
+  }
+
+  handleMouseMove() {
+    if (this.vars.drawing && this.vars.penDown) {
+      let pos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
+      this.drawLine(pos);
+      this.oldX = pos.x;
+      this.oldY = pos.y;
+    } else {
+      let percentMousePos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
+      Client.sendMouse(percentMousePos.x, percentMousePos.y, this.vars.color, this.vars.size);
+    }
+  }
+
+  getPercentPos(pos) {
+    let x = (pos.x / this.stage.canvas.width);
+    let y = (pos.y / this.stage.canvas.height);
+    return { x, y };
+  }
+
+  drawLine(pos) {
+    let line = {
+      color: this.vars.color, 
+      size: this.vars.size, 
+      oldX: this.oldX, 
+      oldY: this.oldY, 
+      x: pos.x, 
+      y: pos.y,
+    };
+    Client.addToLines(line);
+    Client.sendLine(line);
+    this.vars.hue = this.vars.hue < 355 ? this.vars.hue + 5 : 0;
+    this.vars.color = createjs.Graphics.getHSL(this.vars.hue, 100, 50);
+  }
+
+  paint() {
+
+    this.cursorLayer.graphics.clear();
+    this.cursorLayer.graphics
+      .beginFill(this.vars.color)
+      .moveTo(this.stage.mouseX, this.stage.mouseY)
+      .drawCircle(this.stage.mouseX, this.stage.mouseY, this.vars.size/2)
+      .endFill();
+    Object.keys(Client.state.mousePos).forEach(userID => {
+      let mousePos = Client.state.mousePos[userID];
+      this.cursorLayer.graphics
+        .beginFill(mousePos.color)
+        .drawCircle(this.stage.canvas.width * mousePos.x, this.stage.canvas.height * mousePos.y, mousePos.size/2)
+        .endFill();
     });
-    this.stage.update();
-  }
 
-  handleMouseDown(evt) {
-    this.setState({
-      penDown: true,
-    });
-
-    var s = new createjs.Shape();
-    this.graphics = s.graphics;
-    this.stage.addChild(s);
-    this.currentShape = s;
-
-    this.paint(evt.stageX, evt.stageY);
-  }
-
-  handleMouseMove(evt) {
-    this.paint(evt.stageX, evt.stageY);
-  }
-
-  paint(x, y) {
-    if (this.currentShape) {
-      if (this.state.drawing && this.state.penDown) {
-        this.lines.push({oldX: this.oldX, oldY: this.oldY, x, y});
-        this.graphics
-          .beginStroke(this.state.color)
-          .setStrokeStyle(this.state.size, "round")
-          .moveTo(this.oldX, this.oldY)
+    let lineBuffer = Client.getLines();
+    if (lineBuffer.length > 0) {
+      lineBuffer.forEach(line => {
+        let oldX = this.stage.canvas.width * line.oldX;
+        let oldY = this.stage.canvas.height * line.oldY;
+        let x = this.stage.canvas.width * line.x;
+        let y = this.stage.canvas.height * line.y;
+        
+        this.drawArea.graphics
+          .beginStroke(line.color)
+          .setStrokeStyle(line.size, 'round','round')
+          .moveTo(oldX, oldY)
           .lineTo(x, y)
           .endStroke();
-      }
-      this.oldX = x;
-      this.oldY = y;
-      this.currentShape.draw(this.stage.canvas.getContext('2d'));
+
+        Client.removeLine(line);
+      });
+
+      this.buffer.updateCache('source-over');
+      this.drawArea.graphics.clear();
     }
+    
+    this.stage.update();
   }
 
   render() {
