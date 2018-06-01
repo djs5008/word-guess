@@ -94,8 +94,8 @@ class JoinMenu extends Component {
         items.push(
           <ListItem key={lobbyID} className={classes.lobby}>
             <Lobby 
-              closeMenu={this.closeMenu} 
-              joinLobby={this.joinLobby} 
+              closeMenu={this.closeMenu}
+              joinLobby={this.joinLobby}
               lobbyID={lobbyID}
               lobbyName={lobby.lobbyName}
               maxPlayers={lobby.maxPlayers}
@@ -103,6 +103,7 @@ class JoinMenu extends Component {
               rounds={lobby.rounds}
               privateLobby={lobby.privateLobby}
               password={lobby.password}
+              bannedUsers={lobby.bannedUsers}
             />
           </ListItem>
         );

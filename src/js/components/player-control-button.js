@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid } from '@material-ui/core';
+import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid, Slide } from '@material-ui/core';
 import * as Client from './client';
 
 const styles = theme => ({
@@ -20,7 +20,7 @@ const styles = theme => ({
     minWidth: 0,
   },
   nested: {
-    boxShadow: 'inset 0px 8px 8px -10px #666, inset 0px -8px 8px -10px #666',
+    boxShadow: 'inset 0px 20px 20px -20px #666, inset 0px -20px 20px -20px #666',
     border: '0px #CCC solid',
   },
   nestedItem: {
@@ -36,6 +36,7 @@ class PlayerControlButton extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      shown: true,
       id: props.id,
       playerInfo: props.playerInfo,
       created: props.created,
@@ -47,12 +48,14 @@ class PlayerControlButton extends Component {
     Client.kickUser(this.state.playerInfo.userID, (userID) => {
       console.log('kicked user: ' + this.state.playerInfo.username);
     });
+    this.props.setControlOpen(-1);
   }
 
   banUser() {
     Client.banUser(this.state.playerInfo.userID, (userID) => {
       console.log('banned user: ' + this.state.playerInfo.username);
     });
+    this.props.setControlOpen(-1);
   }
 
   getControlItems(playerInfo) {
@@ -69,12 +72,12 @@ class PlayerControlButton extends Component {
     if (this.state.created) {
       items.push(
         <ListItem key={2} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Kick" onClick={this.kickUser()} />
+          <ListItemText className={classes.controlOption} primary="Kick" onClick={this.kickUser.bind(this)} />
         </ListItem>
       );
       items.push(
         <ListItem key={3} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Ban" onClick={this.kickUser()} />
+          <ListItemText className={classes.controlOption} primary="Ban" onClick={this.banUser.bind(this)} />
         </ListItem>
       );
     }
@@ -100,30 +103,33 @@ class PlayerControlButton extends Component {
     return (
       <Grid container justify='center' alignContent='center' alignItems='center' key={this.state.playerInfo.userID}>
         <Grid item xs={12}>
-          <ListItem className={classes.playerButtonContainer}>
-            <Button
-              className={classes.playerButton}
-              color='default'
-              variant='flat'
-              fullWidth
-              disabled={this.state.open}
-              onClick={evt => this.props.setControlOpen(this.state.id)}
-            >
-              <Grid container justify='center' alignContent='center' alignItems='center'>
-                <Grid item xs={4}>
-                  <Avatar className={classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
-                </Grid>
-                <Grid item xs={6}>
-                  <Hidden smDown>
-                    <Typography variant='body2' color='textSecondary' align='left'>{this.state.playerInfo.username}</Typography>
-                  </Hidden>
-                </Grid>
-              </Grid>
-            </Button>
-          </ListItem>
-          <Collapse in={this.state.open} timeout="auto" unmountOnExit className={classes.nested}>
-            {this.getControlItems()}
-          </Collapse>
+          <Slide in={this.state.shown} direction='right'>
+            <div>  
+              <ListItem className={classes.playerButtonContainer}>
+                <Button
+                  className={classes.playerButton}
+                  color='default'
+                  variant='flat'
+                  fullWidth
+                  onClick={evt => this.props.setControlOpen(this.state.id)}
+                >
+                  <Grid container justify='center' alignContent='center' alignItems='center'>
+                    <Grid item xs={4}>
+                      <Avatar className={classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Hidden smDown>
+                        <Typography variant='body2' color='textSecondary' align='left'>{this.state.playerInfo.username}</Typography>
+                      </Hidden>
+                    </Grid>
+                  </Grid>
+                </Button>
+              </ListItem>
+              <Collapse in={this.state.open} timeout="auto" unmountOnExit className={classes.nested}>
+                {this.getControlItems()}
+              </Collapse>
+            </div>
+          </Slide>  
         </Grid>
       </Grid>
     );

@@ -73,9 +73,15 @@ class Game extends Component {
 
   setControlOpen(id) {
     setTimeout(() => {
-      this.setState({
-        openControl: id,
-      });
+      if (this.state.openControl !== id) {
+        this.setState({
+          openControl: id,
+        });
+      } else {
+        this.setState({
+          openControl: -1,
+        });
+      }
     }, 0);
   }
 
@@ -91,6 +97,7 @@ class Game extends Component {
           created={this.state.created} 
           open={this.state.openControl === id}
           setControlOpen={this.setControlOpen}
+          showMenu={this.props.showMenu}
         />
       );
       id++;
@@ -149,11 +156,15 @@ class Game extends Component {
   componentDidMount() {
     this.setState({
       playerMaintainer: setInterval(() => {
-        this.setState({
-          players: Client.state.players,
-          created: Client.state.createdLobby,
-        });
-      }, 500),
+        if (Client.state.activeLobby !== undefined) {
+          this.setState({
+            players: Client.state.players,
+            created: Client.state.createdLobby,
+          });
+        } else {
+          this.props.showMenu();
+        }  
+      }, 100),
     });
   }
 

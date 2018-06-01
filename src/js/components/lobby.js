@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Paper, Button, Icon, Slide, TextField, Grid } from '@material-ui/core';
+import * as Client from './client';
 
 const styles = theme => ({
   paper: {
@@ -60,7 +61,8 @@ class Lobby extends Component {
 
   isButtonDisabled() {
     return this.isLobbyFull() 
-      || (this.state.privateLobby && this.state.typing && this.state.password === '');
+      || (this.state.privateLobby && this.state.typing && this.state.password === '')
+      || (this.props.bannedUsers.includes(Client.state.userID));
   }
 
   isTyping() {

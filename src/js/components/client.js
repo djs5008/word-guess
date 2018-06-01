@@ -53,20 +53,20 @@ function register(username, cb) {
     state.mousePos[userID] = {x, y, color, size};
   });
 
-  // Subscribe to disconnection handler
+  socket.on('kick', (userID, reason) => {
+    leaveLobby(() => {
+      console.log('kicked reason: ' + reason);
+    });
+  })
+
+  // Handle reconnecting to socket when a disconnection happens
   socket.once('disconnect', () => {
     state.reconnecting = true;
   });
-
   socket.once('reconnect', () => {
     state.reconnecting = false;
   });
 
-  socket.on('kick', (reason) => {
-    this.leaveLobby(() => {
-      console.log('kicked reason: ' + reason);
-    });
-  })
 
   // Tell the server we are registering
   socket.emit('register', username, userID);

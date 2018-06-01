@@ -134,7 +134,8 @@ function createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby
 function joinGame(socket, userID, lobbyID, password) {
   let sessionData = users[userID];
   let lobby = lobbies[lobbyID];
-  if (sessionData !== undefined && sessionData !== null) {
+  if (sessionData !== undefined && sessionData !== null
+    && sessionData.connectedGame === undefined) {
     if (lobby !== undefined && lobby !== null) {
       if (!lobby.privateLobby 
           || lobby.connectedUsers.includes(userID) 
@@ -215,19 +216,15 @@ function kickUser(masterID, userID) {
   let sessionData = users[userID];
   if (sessionData !== null && sessionData !== undefined) {
     let lobby = lobbies[sessionData.connectedGame];
-    let creatorID = undefined;
     if (lobby !== undefined && lobby !== null) {
-      creatorID = lobby.creatorID;
-    }
-
-    if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
-      let userSocket = io.sockets.connected[sessionData.sessionID];
-      let masterSocket = io.sockets.connected[users[masterID].sessionID];
-      if (userSocket !== undefined && userSocket !== null
-        && masterSocket !== undefined && masterSocket !== null) {
-        lobby.ban(userID);
-        userSocket.emit('kick', userID, 'you have been kicked!');
-        masterSocket.emit('kicked', userID);
+      if (lobby.creatorID === masterID) {
+        let userSocket = io.sockets.connected[sessionData.socketID];
+        let masterSocket = io.sockets.connected[users[masterID].socketID];
+        if (userSocket !== undefined && userSocket !== null
+          && masterSocket !== undefined && masterSocket !== null) {
+          userSocket.emit('kick', userID, 'you have been kicked!');
+          masterSocket.emit('kicked', userID);
+        }
       }
     }
   }
@@ -237,19 +234,16 @@ function banUser(masterID, userID) {
   let sessionData = users[userID];
   if (sessionData !== null && sessionData !== undefined) {
     let lobby = lobbies[sessionData.connectedGame];
-    let creatorID = undefined;
     if (lobby !== undefined && lobby !== null) {
-      creatorID = lobby.creatorID;
-    }
-
-    if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
-      let userSocket = io.sockets.connected[sessionData.sessionID];
-      let masterSocket = io.sockets.connected[users[masterID].sessionID];
-      if (userSocket !== undefined && userSocket !== null
-        && masterSocket !== undefined && masterSocket !== null) {
-        lobby.ban(userID);
-        userSocket.emit('kick', userID, 'you have been banned!');
-        masterSocket.emit('kicked', userID);
+      if (lobby.creatorID === masterID) {
+        let userSocket = io.sockets.connected[sessionData.socketID];
+        let masterSocket = io.sockets.connected[users[masterID].socketID];
+        if (userSocket !== undefined && userSocket !== null
+          && masterSocket !== undefined && masterSocket !== null) {
+            userSocket.emit('kick', userID, 'you have been banned!');
+            masterSocket.emit('kicked', userID);
+            lobby.ban(userID);
+        }
       }
     }
   }
@@ -257,33 +251,37 @@ function banUser(masterID, userID) {
 
 function echoLine(userID, line) {
   let user = users[userID];
-  let lobby = lobbies[user.connectedGame];
-  if (lobby !== undefined && lobby !== null) {
-    lobby.connectedUsers.forEach(playerID => {
-      if (userID !== playerID) {
-        let player = users[playerID];
-        let socket = io.sockets.connected[player.socketID];
-        if (socket !== undefined && socket !== null) {
-          io.sockets.connected[player.socketID].emit('line', line);
+  if (user !== undefined && user !== null) {
+    let lobby = lobbies[user.connectedGame];
+    if (lobby !== undefined && lobby !== null) {
+      lobby.connectedUsers.forEach(playerID => {
+        if (userID !== playerID) {
+          let player = users[playerID];
+          let socket = io.sockets.connected[player.socketID];
+          if (socket !== undefined && socket !== null) {
+            io.sockets.connected[player.socketID].emit('line', line);
+          }
         }
-      }
-    });
+      });
+    }
   }
 }
 
 function echoMouses(userID, x, y, color, size) {
   let user = users[userID];
-  let lobby = lobbies[user.connectedGame];
-  if (lobby !== undefined && lobby !== null) {
-    lobby.connectedUsers.forEach(playerID => {
-      if (userID !== playerID) {
-        let player = users[playerID];
-        let socket = io.sockets.connected[player.socketID];
-        if (socket !== undefined && socket !== null) {
-          socket.emit('mousePos', userID, x, y, color, size);
+  if (user !== undefined && user !== null) {
+    let lobby = lobbies[user.connectedGame];
+    if (lobby !== undefined && lobby !== null) {
+      lobby.connectedUsers.forEach(playerID => {
+        if (userID !== playerID) {
+          let player = users[playerID];
+          let socket = io.sockets.connected[player.socketID];
+          if (socket !== undefined && socket !== null) {
+            socket.emit('mousePos', userID, x, y, color, size);
+          }
         }
-      }
-    });
+      });
+    }
   }
 }
 
