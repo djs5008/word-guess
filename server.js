@@ -222,7 +222,7 @@ function kickUser(masterID, userID) {
 
     if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
       let userSocket = io.sockets.connected[sessionData.sessionID];
-      let masterSocket = io.sockets.connect[users[masterID].sessionID];
+      let masterSocket = io.sockets.connected[users[masterID].sessionID];
       if (userSocket !== undefined && userSocket !== null
         && masterSocket !== undefined && masterSocket !== null) {
         lobby.ban(userID);
@@ -244,7 +244,7 @@ function banUser(masterID, userID) {
 
     if (creatorID !== null && creatorID !== undefined && creatorID === masterID) {
       let userSocket = io.sockets.connected[sessionData.sessionID];
-      let masterSocket = io.sockets.connect[users[masterID].sessionID];
+      let masterSocket = io.sockets.connected[users[masterID].sessionID];
       if (userSocket !== undefined && userSocket !== null
         && masterSocket !== undefined && masterSocket !== null) {
         lobby.ban(userID);

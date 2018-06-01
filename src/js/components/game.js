@@ -151,6 +151,7 @@ class Game extends Component {
       playerMaintainer: setInterval(() => {
         this.setState({
           players: Client.state.players,
+          created: Client.state.createdLobby,
         });
       }, 500),
     });
