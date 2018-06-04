@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import * as Client from './client';
-import { Paper, Slide, TextField, Divider } from '@material-ui/core';
+import { Paper, Slide, TextField, Divider, Grid } from '@material-ui/core';
 
 const classes = theme => ({
   chatContainer: {
@@ -12,7 +12,6 @@ const classes = theme => ({
   },
   chatTextContainer: {
     height: '75%',
-    maxHeight: '75%',
     overflow: 'auto',
   },
   chatFieldContainer: {
@@ -26,7 +25,7 @@ const classes = theme => ({
     overflow: 'hidden',
   },
   chatContent: {
-    height: '93%',
+    height: '100%',
     padding: 5,
   }
 });
@@ -37,26 +36,9 @@ class Chat extends Component {
     super(props);
     this.state = {
       shown: true,
-      chatText: '\\n\\n\\n\\n\\n\\n\\n'
+      chatText: '\\n\\n\\n\\n\\n\\n\\n',
+      chatTimer: undefined,
     };
-
-    // Keep chat up to date
-    setInterval(() => {
-      
-      let chatTextNew = '\\n\\n\\n\\n\\n\\n\\n';
-      Client.state.guesses.forEach(guessObj => {
-        if (!Client.state.mutedUsers.includes(guessObj.userID)) {
-          chatTextNew += '\\n' + guessObj.username.toUpperCase() + ": " + guessObj.guess;
-        }  
-      });
-
-      if (this.state.chatText !== chatTextNew) {
-        this.setState({
-          chatText: chatTextNew,
-        });
-        document.getElementById('chatarea').scrollTop = document.getElementById('chatarea').scrollHeight;
-      }  
-    }, 1);
   }
 
   submitGuess() {
@@ -64,6 +46,31 @@ class Chat extends Component {
     let guess = guessField.value;
     Client.sendGuess(guess);
     guessField.value = '';
+  }
+
+  componentWillMount() {
+    this.setState({
+      chatTimer:
+        setInterval(() => {
+          let chatTextNew = '\\n\\n\\n\\n\\n\\n\\n';
+          Client.state.guesses.forEach(guessObj => {
+            if (!Client.state.mutedUsers.includes(guessObj.userID)) {
+              chatTextNew += '\\n' + guessObj.username.toUpperCase() + ": " + guessObj.guess;
+            }  
+          });
+
+          if (this.state.chatText !== chatTextNew) {
+            this.setState({
+              chatText: chatTextNew,
+            });
+            document.getElementById('chatarea').scrollTop = document.getElementById('chatarea').scrollHeight;
+          }  
+        }, 1),
+    });
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.state.chatTimer);
   }
 
   componentDidMount() {
@@ -75,8 +82,8 @@ class Chat extends Component {
     return (
       <Slide in={this.state.shown} direction='up'>
         <Paper className={classes.chatContainer}>
-          <div className={classes.chatContent}>  
-            <div className={classes.chatTextContainer}>
+          <Grid container justify='center' alignItems='stretch' alignContent='stretch' className={classes.chatContent}>  
+            <Grid item xs={12} className={classes.chatTextContainer}>
               <TextField
                 id='chatarea'
                 className={classes.chatText}
@@ -86,8 +93,8 @@ class Chat extends Component {
                 value={this.state.chatText.replace(/\\n/g, '\n')}
                 rows={5}
               />
-            </div>
-            <div className={classes.chatFieldContainer}>
+            </Grid>
+            <Grid item xs={12} className={classes.chatFieldContainer}>
               <Divider/>
               <TextField
                 id='guessfield'  
@@ -100,8 +107,8 @@ class Chat extends Component {
                   }
                 }}
               />
-            </div>  
-          </div>  
+            </Grid>  
+          </Grid>  
         </Paper>
       </Slide>  
     );
