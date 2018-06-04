@@ -12,7 +12,7 @@ const classes = theme => ({
   },
   chatTextContainer: {
     height: '75%',
-    overflow: 'auto',
+    overflow: 'hidden',
   },
   chatFieldContainer: {
     height: '25%',
@@ -21,8 +21,7 @@ const classes = theme => ({
     height: '100%',
   },
   chatText: {
-    // height: '100%',
-    overflow: 'hidden',
+    height: '100%',
   },
   chatContent: {
     height: '100%',
