@@ -133,8 +133,8 @@ class JoinMenu extends Component {
         aria-labelledby='simple-modal-title'
         aria-describedby='simple-modal-description'
         open={this.state.shown}
-        onBackdropClick={() => this.closeMenu()}
-        onEscapeKeyDown={() => this.closeMenu()}
+        onBackdropClick={this.closeMenu.bind(this)}
+        onEscapeKeyDown={this.closeMenu.bind(this)}
         disableRestoreFocus
       >
         <Grid container justify='center' alignContent='center' alignItems='center' style={{pointerEvents: 'none'}}>

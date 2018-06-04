@@ -49,6 +49,7 @@ class ConnectedBar extends Component {
       playerMaintainer: undefined,
       players: [],
       openControl: -1,
+      created: false,
     };
     this.setControlOpen = this.setControlOpen.bind(this);
   }

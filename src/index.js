@@ -216,6 +216,7 @@ class App extends Component {
         );
       case 'loading':
       default:
+        console.log(this.state.activeState !== 'loading' && this.state.activeState !== undefined);
         return (
           <Loading 
             loading={true}

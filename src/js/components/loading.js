@@ -17,10 +17,10 @@ class Loading extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: false,
-      loadingText: 'LOADING...',
-      cancellable: true,
-      hidden: true,
+      loading: props.loading,
+      loadingText: props.loadingText||'Loading...',
+      cancellable: props.cancellable||true,
+      hidden: props.hidden,
     };
   }
 
