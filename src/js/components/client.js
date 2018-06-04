@@ -1,7 +1,7 @@
 import openSocket from 'socket.io-client';
 import uuid from 'uuid/v4';
 
-const socket = openSocket('http://localhost:3001/', {
+const socket = openSocket('http://173.45.190.215:3001/', {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
@@ -19,6 +19,7 @@ const state = {
   lineBuffer: [],
   mousePos: {},
   mutedUsers: [],
+  guesses: [],
 };
 
 function shouldAutoRegister() {
@@ -47,18 +48,6 @@ function register(username, cb) {
     state.lobbies = lobbies;
   });
 
-  socket.on('line', (line) => addToLines(line));
-
-  socket.on('mousePos', (userID, x, y, color, size) => {
-    state.mousePos[userID] = {x, y, color, size};
-  });
-
-  socket.on('kick', (userID, reason) => {
-    leaveLobby(() => {
-      console.log('kicked reason: ' + reason);
-    });
-  })
-
   // Handle reconnecting to socket when a disconnection happens
   socket.once('disconnect', () => {
     state.reconnecting = true;
@@ -66,7 +55,6 @@ function register(username, cb) {
   socket.once('reconnect', () => {
     state.reconnecting = false;
   });
-
 
   // Tell the server we are registering
   socket.emit('register', username, userID);
@@ -81,9 +69,6 @@ function registered(cb) {
 
 function unregister() {
   socket.off('lobbies');
-  socket.off('line');
-  socket.off('mousePos');
-  socket.off('kick');
   socket.emit('unregister', state.userID);
   state.username = null;
   state.userID = null;
@@ -101,14 +86,35 @@ function createLobby(lobbyName, maxPlayers, rounds, privateLobby, password, cb) 
 }
 
 function joinLobby(lobbyID, password, cb) {
-  socket.once('joined', (status) => {
+  socket.once('joined', (status, message) => {
     if (status) {
       state.activeLobby = lobbyID;
+
       socket.on('connectedPlayers', (players) => {
         state.players = players;
       });
+
+      socket.once('kick', (userID, reason) => {
+        leaveLobby(() => {
+          console.log('kicked reason: ' + reason);
+        });
+      });
+
+      socket.on('line', (line) => addToLines(line));
+
+      socket.on('mousePos', (userID, x, y, color, size) => {
+        state.mousePos[userID] = {x, y, color, size};
+      });
+
+      socket.on('guess', (userID, username, guess) => {
+        state.guesses.push({userID, username, guess});
+      });
+
       socket.off('lobbies');
+
       getCurrentGame(()=>{});
+    } else {
+      console.log('Unable to join game: ' + message);
     }
     cb(status);
   });
@@ -118,11 +124,17 @@ function joinLobby(lobbyID, password, cb) {
 function leaveLobby(cb) {
   socket.once('left', () => {
     socket.off('connectedPlayers');
+    socket.off('line');
+    socket.off('mousePos');
+    socket.off('kick');
+    socket.off('guess');
     socket.on('lobbies', (lobbies) => {
       state.lobbies = lobbies;
     });
     state.activeLobby = undefined;
     state.players = [];
+    state.lineBuffer = [];
+    state.guesses = [];
     state.createdLobby = false;
     cb();
   });
@@ -171,6 +183,20 @@ function sendMouse(x, y, color, size) {
   socket.emit('mousePos', state.userID, x, y, color, size);
 }
 
+function sendGuess(guess) {
+  if (guess.replace(/ /g, '') !== '') {
+    socket.emit('guess', state.userID, guess);
+  }  
+}
+
+function muteUser(userID) {
+  state.mutedUsers.push(userID);
+}
+
+function unmuteUser(userID) {
+  state.mutedUsers = state.mutedUsers.filter(item => item !== userID);
+}
+
 export { 
   shouldAutoRegister, 
   register, 
@@ -189,6 +215,9 @@ export {
   sendMouse,
   kickUser,
   banUser,
+  muteUser,
+  unmuteUser,
+  sendGuess,
 
   state,
 };

@@ -1,56 +1,37 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { List, Typography, Divider, Button, Icon, Slide, Grid, Paper, Hidden } from '@material-ui/core';
-import PlayerControlButton from './player-control-button';
+import { Slide, Grid } from '@material-ui/core';
+import * as Client from './client';
 import Canvas from './canvas';
-import * as Client from './client'
 import Chat from './chat';
-
-const ANIM_SLIDE_TIME = 500;
+import ConnectedBar from './connectedbar'
 
 const styles = theme => ({
   root: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
+    width: '100%',
+    height: '95%',
+  },
+  gameContainer: {
+    width: '100%',
     height: '100%',
   },
-  content: {
-    padding: 5,
-    overflowY: 'auto',
+  canvasGridContainer: {
+    width: '100%',
+    height: '80%',
+  },
+  canvasContainer: {
+    width: '100%',
     height: '100%',
   },
-  iconAlign: {
-    marginTop: '-0.125em',
-    verticalAlign: 'middle',
-  },
-  controls: {
-    position: 'fixed',
-    margin: 5,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    opacity: 1,
-  },
-  paper: {
+  chatContainer: {
+    width: '100%',
+    height: '100%',
     position: 'absolute',
-    top: '3%',
-    left: 0,
-    opacity: 1,
-    minWidth: 50,
-    width: '15%',
-    height: '94%',
-    overflow: 'hidden',
   },
-  controlHeader: {
-    margin: 5,
-    fontSize: '1.8vmin',
-  },
-  controlButton: {
-    opacity: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    marginBottom: 5,
+  chatGridContainer: {
+    width: '100%',
+    height: '20%',
+    position: 'relative',
   },
 });
 
@@ -60,90 +41,9 @@ class Game extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      lobbyID: props.lobbyID,
+      lobbyID: Client.state.activeLobby,
       created: props.created,
-      openControl: -1,
-      playerMaintainer: undefined,
-      players: [],
     };
-    this.leaveGame = this.leaveGame.bind(this);
-    this.setControlOpen = this.setControlOpen.bind(this);
-    this.startGame = this.startGame.bind(this);
-  }
-
-  setControlOpen(id) {
-    setTimeout(() => {
-      if (this.state.openControl !== id) {
-        this.setState({
-          openControl: id,
-        });
-      } else {
-        this.setState({
-          openControl: -1,
-        });
-      }
-    }, 0);
-  }
-
-  getConnectedPlayers() {
-    let items = [];
-    let id = 0;
-    this.state.players.forEach(playerInfo => {
-      items.push(
-        <PlayerControlButton 
-          id={id} 
-          key={playerInfo.username + id} 
-          playerInfo={playerInfo} 
-          created={this.state.created} 
-          open={this.state.openControl === id}
-          setControlOpen={this.setControlOpen}
-          showMenu={this.props.showMenu}
-        />
-      );
-      id++;
-    });
-    return (
-      <List>
-        {items}
-      </List>
-    );
-  }
-  
-  leaveGame() {
-    setTimeout(() => {
-      this.props.startLoading(false, 'Leaving game...');
-      this.props.leaveGame(() => {
-        this.props.showMenu();
-      });
-    }, 0);
-  }
-
-  startGame() {
-
-  }
-
-  showStartButton() {
-    const { classes } = this.props;
-    let result = null;
-
-    if (this.state.created) {
-      result = (
-        <Button
-          className={classes.controlButton}
-          variant='raised'
-          color='primary'
-          fullWidth
-          onClick={this.startGame}
-        >
-          <Hidden xsDown>
-            <Typography variant='button' color='textSecondary'>Start&nbsp;</Typography>
-          </Hidden>
-          <Icon>play_circle_filled</Icon>
-        </Button>
-      );
-    }
-
-    return (result);
   }
 
   componentWillReceiveProps(props) {
@@ -153,74 +53,61 @@ class Game extends Component {
     });
   }
 
-  componentDidMount() {
-    this.setState({
-      playerMaintainer: setInterval(() => {
-        if (Client.state.activeLobby !== undefined) {
-          this.setState({
-            players: Client.state.players,
-            created: Client.state.createdLobby,
-          });
-        } else {
-          this.props.showMenu();
-        }  
-      }, 100),
-    });
+  leaveGame() {
+    setTimeout(() => {
+      this.props.startLoading(false, 'Leaving game...');
+      Client.leaveLobby(() => {
+        this.props.showMenu();
+      });
+    }, 0);
   }
 
-  componentWillUnmount() {
-    clearTimeout(this.state.playerMaintainer);
+  startGame() {
+
   }
 
   render() {
     const { classes } = this.props;
 
     return (
-      <Grid container className={classes.root} justify='center' alignContent='center' alignItems='center'>
+      <Grid
+        container
+        className={classes.root}
+        spacing={8}
+        direction='row'
+        justify='center'
+        alignContent='stretch'
+        alignItems='stretch'
+      >
         <Grid item xs={2}>
-          <Slide
-            in={this.state.shown}
-            direction='right'
-            timeout={ANIM_SLIDE_TIME}
-          >
-            <Paper className={classes.paper}>
-              <Typography className={classes.controlHeader} variant='body2' align='center'>Connected Players:</Typography>
-              <Divider/>
-              <div className={classes.content}>
-                <div>
-                  {this.getConnectedPlayers()}
-                </div>
-              </div>
-              <div className={classes.controls}>
-                <Divider/>
-                {this.showStartButton()}
-                <Button
-                  className={classes.controlButton}
-                  variant='raised'
-                  color='secondary'
-                  fullWidth
-                  onClick={this.leaveGame}
-                >
-                  <Icon className={classes.iconAlign}>meeting_room</Icon>
-                  <Hidden xsDown>
-                    <Typography variant='button' color='textSecondary'>&nbsp;Leave</Typography>
-                  </Hidden>
-                </Button>
-              </div>
-            </Paper>
-          </Slide>
+          <ConnectedBar
+            showMenu={this.props.showMenu}
+            startGame={this.startGame.bind(this)}
+            leaveGame={this.leaveGame.bind(this)}
+          />  
         </Grid>
-        <Grid item xs={10}>
-          <div>  
-            <Grid container>
-              <Grid item xs={12}>
-                <Canvas />
-              </Grid>
-              <Grid item xs={12}>
-                <Chat />
-              </Grid>
+        <Grid item xs={10} style={{paddingBottom: 0,}}>
+          <Grid
+            container
+            className={classes.gameContainer}
+            justify='center'
+            alignItems='center'
+            alignContent='center'
+            spacing={8}
+          >
+            <Grid className={classes.canvasGridContainer} item xs={12}>
+              <Slide in={this.state.shown} direction='down' >
+                <div id='canvasContainer' className={classes.canvasContainer}>  
+                  <Canvas />
+                </div>
+              </Slide>
             </Grid>
-          </div>  
+            <Grid className={classes.chatGridContainer} item xs={12}>
+              <div className={classes.chatContainer}>  
+                <Chat />
+              </div>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     );

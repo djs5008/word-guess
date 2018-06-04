@@ -7,10 +7,7 @@ const createjs = window.createjs;
 
 const classes = theme => ({
   canvas: {
-    paddingLeft: 0,
-    paddingRight: 0,
-    margin: 'auto',
-    boxShadow: '3px 3px 10px #000',
+    boxShadow: '0px 1px 5px 0px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 3px 1px -2px rgba(0, 0, 0, 0.12)',
     cursor: 'pointer',
   },
 });
@@ -40,6 +37,7 @@ class Canvas extends Component {
     this.stage.addChild(this.buffer);
     this.buffer.addChild(this.drawArea);
     this.stage.addChild(this.cursorLayer);
+    
     this.stage.mouseMoveOutside = true;
     
     createjs.Touch.enable(this.stage, true);
@@ -56,17 +54,25 @@ class Canvas extends Component {
   fillBackground() {
     this.background.graphics.clear();
     this.background.graphics
-      .beginFill('rgba(0,0,0,0.6)')
+      .beginFill('rgba(0,0,0,0.4)')
+      .beginStroke('rgba(255,255,255,0.3)')
+      .setStrokeStyle(3)
       .drawRect(0, 0, this.stage.canvas.width, this.stage.canvas.height)
-      .endFill();
+      .endFill()
+      .endStroke()
+      .setStrokeStyle();
     this.background.uncache();
     this.background.cache(0, 0, this.stage.canvas.width, this.stage.canvas.height);
     this.stage.update();
   }
 
   fitStage() {
-    this.stage.canvas.width = window.innerWidth * (0.80);
-    this.stage.canvas.height = window.innerHeight * (0.7);
+    this.stage.canvas.height = 0;
+    // this.stage.canvas.width = 0;
+    let divHeight = document.getElementById('canvasContainer').clientHeight;
+    let divWidth = parseFloat(window.getComputedStyle(document.getElementById('canvasContainer')).width);
+    this.stage.canvas.height = divHeight;
+    this.stage.canvas.width = divWidth;
     this.buffer.uncache();
     this.buffer.cache(0, 0, this.stage.canvas.width, this.stage.canvas.height);
     this.fillBackground();

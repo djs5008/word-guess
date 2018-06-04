@@ -58,6 +58,14 @@ class PlayerControlButton extends Component {
     this.props.setControlOpen(-1);
   }
 
+  toggleMute() {
+    if (Client.state.mutedUsers.includes(this.state.playerInfo.userID)) {
+      Client.unmuteUser(this.state.playerInfo.userID);
+    } else {
+      Client.muteUser(this.state.playerInfo.userID);
+    }
+  }
+
   getControlItems(playerInfo) {
 
     const { classes } = this.props;
@@ -65,19 +73,31 @@ class PlayerControlButton extends Component {
 
     items.push(
       <ListItem key={1} button className={classes.nestedItem}>
-        <ListItemText className={classes.controlOption} primary="Mute" />
+        <ListItemText
+          className={classes.controlOption}
+          primary={Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'Unmute' : 'Mute'}
+          onClick={this.toggleMute.bind(this)}
+        />
       </ListItem>
     );
 
     if (this.state.created) {
       items.push(
         <ListItem key={2} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Kick" onClick={this.kickUser.bind(this)} />
+          <ListItemText
+            className={classes.controlOption}
+            primary='Kick'
+            onClick={this.kickUser.bind(this)}
+          />
         </ListItem>
       );
       items.push(
         <ListItem key={3} button className={classes.nestedItem}>
-          <ListItemText className={classes.controlOption} primary="Ban" onClick={this.banUser.bind(this)} />
+          <ListItemText
+            className={classes.controlOption}
+            primary='Ban'
+            onClick={this.banUser.bind(this)}
+          />
         </ListItem>
       );
     }
@@ -111,6 +131,7 @@ class PlayerControlButton extends Component {
                   color='default'
                   variant='flat'
                   fullWidth
+                  disabled={this.state.playerInfo.userID === Client.state.userID}
                   onClick={evt => this.props.setControlOpen(this.state.id)}
                 >
                   <Grid container justify='center' alignContent='center' alignItems='center'>
@@ -125,7 +146,7 @@ class PlayerControlButton extends Component {
                   </Grid>
                 </Button>
               </ListItem>
-              <Collapse in={this.state.open} timeout="auto" unmountOnExit className={classes.nested}>
+              <Collapse in={this.state.open} unmountOnExit className={classes.nested}>
                 {this.getControlItems()}
               </Collapse>
             </div>

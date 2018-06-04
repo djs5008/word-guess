@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Modal, TextField, Tooltip, Button, Grid, Grow } from '@material-ui/core';
+import * as Client from './client';
 
 const styles = theme => ({
   paper: {
@@ -38,7 +39,7 @@ class SignIn extends Component {
   
   setSignedIn(status) {
     this.props.startLoading(false, 'Welcome ' + this.state.username + '!\nSigning in...');
-    this.props.register(this.state.username, () => {
+    Client.register(this.state.username, () => {
       this.props.showMenu();
     });
   }

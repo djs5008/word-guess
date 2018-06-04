@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid, Grow, Tooltip } from '@material-ui/core';
+import * as Client from './client';
 
 const styles = theme => ({
   paper: {
@@ -76,15 +77,15 @@ class CreateMenu extends Component {
 
   createLobby() {
     this.props.startLoading(true, 'Setting up lobby...');
-    this.props.createLobby(
-      this.state.lobbyName, 
-      this.state.maxPlayers, 
-      this.state.rounds, 
-      this.state.private, 
-      this.state.password, 
+    Client.createLobby(
+      this.state.lobbyName,
+      this.state.maxPlayers,
+      this.state.rounds,
+      this.state.private,
+      this.state.password,
       (lobbyID) => {
         this.props.startLoading(true, 'Joining game...');
-        this.props.joinLobby(lobbyID, this.state.password, (status) => {
+        Client.joinLobby(lobbyID, this.state.password, (status) => {
           if (status) {
             this.props.showGameLobby();
           } else {

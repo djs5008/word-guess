@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
+import * as Client from './client';
 
 const styles = theme => ({
   button: {
@@ -151,10 +152,10 @@ class MainMenu extends Component {
           message={
             <div>
               <Typography variant='body2' className={classes.createButton}>
-                Signed in as '{this.props.username}'!
+                Signed in as '{Client.state.username}'!
               </Typography>
               <Typography variant='caption'>
-                user id: {this.props.userID}
+                user id: {Client.state.userID}
               </Typography>
             </div>
           }

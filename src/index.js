@@ -183,7 +183,6 @@ class App extends Component {
         return (
           <SignIn 
             shown={true}
-            register={Client.register}
             showMenu={this.showMenu}
             startLoading={this.startLoading}
           />
@@ -192,8 +191,6 @@ class App extends Component {
         return (
           <CreateMenu 
             shown={true}
-            createLobby={Client.createLobby}
-            joinLobby={Client.joinLobby}
             startLoading={this.startLoading}
             showMenu={this.showMenu}
             showGameLobby={this.showGameLobby}
@@ -203,7 +200,6 @@ class App extends Component {
         return (
           <JoinMenu 
             shown={true}
-            joinLobby={Client.joinLobby}
             startLoading={this.startLoading}
             showGameLobby={this.showGameLobby}
             showJoinLobby={this.showJoinLobby}
@@ -214,8 +210,6 @@ class App extends Component {
         return (
           <Game
             shown={true}
-            lobbyID={Client.state.activeLobby}
-            leaveGame={Client.leaveLobby}
             showMenu={this.showMenu}
             startLoading={this.startLoading}
           />
@@ -241,8 +235,6 @@ class App extends Component {
         <MainMenu 
           shown={this.state.activeState === 'menu'}
           shownName={this.state.shownName}
-          username={Client.state.username}
-          userID={Client.state.userID}
           signOut={this.signOut}
           showJoinLobby={this.showJoinLobby}
           showCreateLobby={this.showCreateLobby}
