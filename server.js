@@ -289,20 +289,22 @@ function echoMouses(userID, x, y, color, size) {
 }
 
 function makeGuess(userID, guess) {
-  if (guess.replace(/ /g, '') !== '') {
-    let user = users[userID];
-    if (user !== undefined && user !== null) {
-      let lobby = lobbies[user.connectedGame];
-      if (lobby !== undefined && lobby !== null) {
-        lobby.connectedUsers.forEach(playerID => {
-          let player = users[playerID];
-          let socket = io.sockets.connected[player.socketID];
-          if (socket !== undefined && socket !== null) {
-            socket.emit('guess', userID, user.username, guess);
-          }
-        });
+  if (guess.length <= 30) {
+    if (guess.replace(/ /g, '') !== '') {
+      let user = users[userID];
+      if (user !== undefined && user !== null) {
+        let lobby = lobbies[user.connectedGame];
+        if (lobby !== undefined && lobby !== null) {
+          lobby.connectedUsers.forEach(playerID => {
+            let player = users[playerID];
+            let socket = io.sockets.connected[player.socketID];
+            if (socket !== undefined && socket !== null) {
+              socket.emit('guess', userID, user.username, guess);
+            }
+          });
+        }
       }
-    }
+    }  
   }  
 }
 

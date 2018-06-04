@@ -8,26 +8,28 @@ const classes = theme => ({
     width: '99.1%',
     height: '97%',
     marginBottom: 0,
-    opacity: 1,
   },
   chatTextContainer: {
     height: '75%',
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   chatFieldContainer: {
-    height: '25%',
+    // height: '25%',
   },
   chatField: {
-    height: '100%',
+    // height: '25%',
   },
   chatText: {
-    height: '100%',
+    maxHeight: '100%',
+    flexDirection: 'inherit',
   },
   chatContent: {
     height: '100%',
     padding: 5,
   }
 });
+
+const MAX_GUESS_LENGTH = 30;
 
 class Chat extends Component {
   
@@ -81,7 +83,7 @@ class Chat extends Component {
     return (
       <Slide in={this.state.shown} direction='up'>
         <Paper className={classes.chatContainer}>
-          <Grid container justify='center' alignItems='stretch' alignContent='stretch' className={classes.chatContent}>  
+          <Grid container className={classes.chatContent}>  
             <Grid item xs={12} className={classes.chatTextContainer}>
               <TextField
                 id='chatarea'
@@ -90,19 +92,25 @@ class Chat extends Component {
                 multiline
                 fullWidth
                 value={this.state.chatText.replace(/\\n/g, '\n')}
-                rows={5}
+                rows={7}
               />
             </Grid>
             <Grid item xs={12} className={classes.chatFieldContainer}>
               <Divider/>
               <TextField
-                id='guessfield'  
-                className={classes.chatField}  
+                id='guessfield'
+                className={classes.chatField}
                 placeholder='Enter Word Guess...'
                 fullWidth
                 onKeyPress={(evt) => {
                   if (evt.key === 'Enter') {
                     this.submitGuess();
+                  }
+                }}
+                onChange={(evt) => {
+                  let value = evt.target.value;
+                  if (value.length > MAX_GUESS_LENGTH) {
+                    evt.target.value = value.substring(0, MAX_GUESS_LENGTH - 1);
                   }
                 }}
               />

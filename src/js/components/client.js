@@ -1,7 +1,7 @@
 import openSocket from 'socket.io-client';
 import uuid from 'uuid/v4';
 
-const socket = openSocket('http://173.45.190.215:3001/', {
+const socket = openSocket('http://localhost:3001/', {
   reconnection: true,
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
@@ -184,8 +184,10 @@ function sendMouse(x, y, color, size) {
 }
 
 function sendGuess(guess) {
-  if (guess.replace(/ /g, '') !== '') {
-    socket.emit('guess', state.userID, guess);
+  if (guess.length <= 30) {
+    if (guess.replace(/ /g, '') !== '') {
+      socket.emit('guess', state.userID, guess);
+    }
   }  
 }
 

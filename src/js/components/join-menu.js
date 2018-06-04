@@ -54,11 +54,14 @@ class JoinMenu extends Component {
 
   componentDidMount() {
     this.setState({
-      lobbyTimer: setInterval(() => {
-                    this.setState({
-                      lobbies: Client.state.lobbies,
-                    })
-                  }, 50),
+      lobbyTimer:
+        setInterval(() => {
+          if (this.state.lobbies !== Client.state.lobbies) {
+            this.setState({
+              lobbies: Client.state.lobbies,
+            });
+          }
+        }, 50),
     });
   }
 
