@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid, Slide } from '@material-ui/core';
+import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid, Slide, ListItemIcon, Icon } from '@material-ui/core';
 import * as Client from './client';
 
 const styles = theme => ({
@@ -20,8 +20,8 @@ const styles = theme => ({
     minWidth: 0,
   },
   nested: {
-    boxShadow: 'inset 0px 20px 20px -20px #666, inset 0px -20px 20px -20px #666',
-    border: '0px #CCC solid',
+    // boxShadow: 'inset 0px 20px 20px -20px #666, inset 0px -20px 20px -20px #666',
+    border: '1px #CCC solid',
   },
   nestedItem: {
     height: 20,
@@ -73,31 +73,46 @@ class PlayerControlButton extends Component {
 
     items.push(
       <ListItem key={1} button className={classes.nestedItem}>
-        <ListItemText
-          className={classes.controlOption}
-          primary={Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'Unmute' : 'Mute'}
-          onClick={this.toggleMute.bind(this)}
-        />
+        <ListItemIcon>
+          <Icon>{Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'speaker_notes' : 'speaker_notes_off'}</Icon>
+        </ListItemIcon>
+        <Hidden smDown>
+          <ListItemText
+            className={classes.controlOption}
+            primary={Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'Unmute' : 'Mute'}
+            onClick={this.toggleMute.bind(this)}
+          />
+        </Hidden>  
       </ListItem>
     );
 
     if (this.state.created) {
       items.push(
         <ListItem key={2} button className={classes.nestedItem}>
-          <ListItemText
-            className={classes.controlOption}
-            primary='Kick'
-            onClick={this.kickUser.bind(this)}
-          />
+          <ListItemIcon>
+            <Icon>warning</Icon>
+          </ListItemIcon>
+          <Hidden smDown>  
+            <ListItemText
+              className={classes.controlOption}
+              primary='Kick'
+              onClick={this.kickUser.bind(this)}
+            />
+          </Hidden>  
         </ListItem>
       );
       items.push(
         <ListItem key={3} button className={classes.nestedItem}>
-          <ListItemText
-            className={classes.controlOption}
-            primary='Ban'
-            onClick={this.banUser.bind(this)}
-          />
+          <ListItemIcon>
+            <Icon>error_outline</Icon>
+          </ListItemIcon>
+          <Hidden smDown>
+            <ListItemText
+              className={classes.controlOption}
+              primary='Ban'
+              onClick={this.banUser.bind(this)}
+            />
+          </Hidden>  
         </ListItem>
       );
     }

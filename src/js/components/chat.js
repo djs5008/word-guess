@@ -11,14 +11,9 @@ const classes = theme => ({
   },
   chatTextContainer: {
     height: '75%',
-    // overflow: 'hidden',
   },
-  chatFieldContainer: {
-    // height: '25%',
-  },
-  chatField: {
-    // height: '25%',
-  },
+  chatFieldContainer: {},
+  chatField: {},
   chatText: {
     maxHeight: '100%',
     flexDirection: 'inherit',
@@ -30,6 +25,9 @@ const classes = theme => ({
 });
 
 const MAX_GUESS_LENGTH = 30;
+const SPACING = '\\n\\n\\n\\n\\n\\n\\n';
+const MOTD = 'Welcome to the game!\\nFeel free to chat / make guesses below...\\n';
+const DEFAULT_TEXT = SPACING + MOTD;
 
 class Chat extends Component {
   
@@ -37,7 +35,7 @@ class Chat extends Component {
     super(props);
     this.state = {
       shown: true,
-      chatText: '\\n\\n\\n\\n\\n\\n\\n',
+      chatText: DEFAULT_TEXT,
       chatTimer: undefined,
     };
   }
@@ -53,7 +51,7 @@ class Chat extends Component {
     this.setState({
       chatTimer:
         setInterval(() => {
-          let chatTextNew = '\\n\\n\\n\\n\\n\\n\\n';
+          let chatTextNew = DEFAULT_TEXT;
           Client.state.guesses.forEach(guessObj => {
             if (!Client.state.mutedUsers.includes(guessObj.userID)) {
               chatTextNew += '\\n' + guessObj.username.toUpperCase() + ": " + guessObj.guess;

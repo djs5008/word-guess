@@ -120,16 +120,16 @@ class ConnectedBar extends Component {
     this.setState({
       playerMaintainer: setInterval(() => {
         if (Client.state.activeLobby !== undefined) {
-          if (this.state.players !== Client.state.players
-            || this.state.created !== Client.state.created) {
+          if (JSON.stringify(this.state.players) !== JSON.stringify(Client.state.players)
+            || this.state.created !== Client.state.createdLobby) {
             this.setState({
               players: Client.state.players,
               created: Client.state.createdLobby,
             });
-          }  
+          }
         } else {
           this.props.showMenu();
-        }  
+        }
       }, 100),
     });
   }

@@ -16,8 +16,8 @@ const state = {
   players: [],
   activeLobby: undefined,
   createdLobby: false,
-  lineBuffer: [],
   mousePos: {},
+  lineBuffer: [],
   mutedUsers: [],
   guesses: [],
 };
@@ -43,17 +43,17 @@ function register(username, cb) {
     cb();
   });
 
-  // Subscribe to maintain list of lobbies
-  socket.on('lobbies', (lobbies) => {
-    state.lobbies = lobbies;
-  });
-
-  // Handle reconnecting to socket when a disconnection happens
+  // Handle reconnecting to server when a disconnection happens
   socket.once('disconnect', () => {
     state.reconnecting = true;
   });
   socket.once('reconnect', () => {
     state.reconnecting = false;
+  });
+
+  // Subscribe to maintain list of lobbies
+  socket.on('lobbies', (lobbies) => {
+    state.lobbies = lobbies;
   });
 
   // Tell the server we are registering
@@ -94,12 +94,6 @@ function joinLobby(lobbyID, password, cb) {
         state.players = players;
       });
 
-      socket.once('kick', (userID, reason) => {
-        leaveLobby(() => {
-          console.log('kicked reason: ' + reason);
-        });
-      });
-
       socket.on('line', (line) => addToLines(line));
 
       socket.on('mousePos', (userID, x, y, color, size) => {
@@ -108,6 +102,12 @@ function joinLobby(lobbyID, password, cb) {
 
       socket.on('guess', (userID, username, guess) => {
         state.guesses.push({userID, username, guess});
+      });
+
+      socket.once('kick', (userID, reason) => {
+        leaveLobby(() => {
+          console.log('kicked reason: ' + reason);
+        });
       });
 
       socket.off('lobbies');
@@ -123,19 +123,25 @@ function joinLobby(lobbyID, password, cb) {
 
 function leaveLobby(cb) {
   socket.once('left', () => {
+    // Unregister socket from persistent listeners
     socket.off('connectedPlayers');
     socket.off('line');
     socket.off('mousePos');
-    socket.off('kick');
     socket.off('guess');
+
+    // Re-register for list of lobbies
     socket.on('lobbies', (lobbies) => {
       state.lobbies = lobbies;
     });
+
+    // Reset State Information
     state.activeLobby = undefined;
     state.players = [];
     state.lineBuffer = [];
     state.guesses = [];
     state.createdLobby = false;
+
+    // Alert client leave was successful
     cb();
   });
   socket.emit('leaving', state.userID);
