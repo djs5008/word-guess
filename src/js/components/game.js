@@ -5,11 +5,13 @@ import * as Client from './client';
 import Canvas from './canvas';
 import Chat from './chat';
 import ConnectedBar from './connectedbar'
+import CanvasControls from './canvas-controls';
 
 const styles = theme => ({
   root: {
     width: '100%',
     height: '95%',
+    overflow: 'hidden',
   },
   gameContainer: {
     width: '100%',
@@ -20,13 +22,14 @@ const styles = theme => ({
     height: '80%',
   },
   canvasContainer: {
-    width: '100%',
-    height: '100%',
+    width: '82%',
+    height: '74%',
+    position: 'absolute',
   },
   chatContainer: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
+    overflow: 'hidden',
   },
   chatGridContainer: {
     width: '100%',
@@ -86,23 +89,24 @@ class Game extends Component {
             leaveGame={this.leaveGame.bind(this)}
           />  
         </Grid>
-        <Grid item xs={10} style={{paddingBottom: 0,}}>
+        <Grid item xs={10} style={{paddingBottom: 0}}>
           <Grid
             container
             className={classes.gameContainer}
             justify='center'
-            alignItems='center'
-            alignContent='center'
+            alignItems='stretch'
+            alignContent='stretch'
             spacing={8}
           >
             <Grid className={classes.canvasGridContainer} item xs={12}>
               <Slide in={this.state.shown} direction='down' >
                 <div id='canvasContainer' className={classes.canvasContainer}>  
                   <Canvas />
+                  <CanvasControls />
                 </div>
               </Slide>
             </Grid>
-            <Grid className={classes.chatGridContainer} item xs={12}>
+            <Grid className={classes.chatGridContainer} item xs={12} style={{paddingBottom: 0}}>
               <div className={classes.chatContainer}>  
                 <Chat />
               </div>

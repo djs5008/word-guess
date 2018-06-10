@@ -12,14 +12,22 @@ const state = {
   username: null,
   userID: null,
   reconnecting: false,
-  lobbies: [],
-  players: [],
   activeLobby: undefined,
   createdLobby: false,
+  lobbies: [],
+  players: [],
   mousePos: {},
   lineBuffer: [],
+  allLines: [],
   mutedUsers: [],
   guesses: [],
+  drawOptions: {
+    color: '#333333',
+    size: 3,
+    drawing: true,
+    clear: false,
+    rainbow: false,
+  },
 };
 
 function shouldAutoRegister() {
@@ -90,28 +98,40 @@ function joinLobby(lobbyID, password, cb) {
     if (status) {
       state.activeLobby = lobbyID;
 
+      // Register timed socket listeners
       socket.on('connectedPlayers', (players) => {
         state.players = players;
       });
 
       socket.on('line', (line) => addToLines(line));
 
-      socket.on('mousePos', (userID, x, y, color, size) => {
-        state.mousePos[userID] = {x, y, color, size};
+      socket.on('mousePos', (userID, mouseInfo) => {
+        state.mousePos[userID] = mouseInfo;
       });
 
       socket.on('guess', (userID, username, guess) => {
         state.guesses.push({userID, username, guess});
       });
 
+      // Register for canvas clears
+      socket.on('clearCanvas', () => {
+        state.lineBuffer = [];
+        state.allLines = [];
+        state.drawOptions.clear = true;
+      });
+
+      // Register for kick listening
       socket.once('kick', (userID, reason) => {
         leaveLobby(() => {
           console.log('kicked reason: ' + reason);
         });
       });
 
+      // Disable socket listeners for menu
       socket.off('lobbies');
-
+      
+      // Request current game info
+      socket.emit('requestLines', state.userID);
       getCurrentGame(()=>{});
     } else {
       console.log('Unable to join game: ' + message);
@@ -128,6 +148,7 @@ function leaveLobby(cb) {
     socket.off('line');
     socket.off('mousePos');
     socket.off('guess');
+    socket.off('clearCanvas');
 
     // Re-register for list of lobbies
     socket.on('lobbies', (lobbies) => {
@@ -138,7 +159,9 @@ function leaveLobby(cb) {
     state.activeLobby = undefined;
     state.players = [];
     state.lineBuffer = [];
+    state.allLines = [];
     state.guesses = [];
+    state.mousePos = [];
     state.createdLobby = false;
 
     // Alert client leave was successful
@@ -175,10 +198,15 @@ function getLines() {
 
 function addToLines(line) {
   state.lineBuffer.push(line);
+  state.allLines.push(line);
 }
 
 function removeLine(line) {
   state.lineBuffer = state.lineBuffer.filter(item => item !== line);
+}
+
+function clearCanvas() {
+  socket.emit('clearCanvas', state.userID);
 }
 
 function sendLine(line) {
@@ -186,7 +214,7 @@ function sendLine(line) {
 }
 
 function sendMouse(x, y, color, size) {
-  socket.emit('mousePos', state.userID, x, y, color, size);
+  socket.emit('mousePos', state.userID, { x, y, color, size });
 }
 
 function sendGuess(guess) {
@@ -226,6 +254,7 @@ export {
   muteUser,
   unmuteUser,
   sendGuess,
+  clearCanvas,
 
   state,
 };

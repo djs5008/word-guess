@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import * as Client from './client';
-import { Paper, Slide, TextField, Divider, Grid } from '@material-ui/core';
+import { Paper, Slide, TextField, Divider, Grid, Typography } from '@material-ui/core';
 
 const classes = theme => ({
   chatContainer: {
-    width: '99.1%',
-    height: '97%',
-    marginBottom: 0,
+    height: '100%',
   },
   chatTextContainer: {
     height: '75%',
@@ -16,17 +14,26 @@ const classes = theme => ({
   chatField: {},
   chatText: {
     maxHeight: '100%',
-    flexDirection: 'inherit',
+    overflow: 'auto',
   },
   chatContent: {
     height: '100%',
     padding: 5,
-  }
+  },
+  chatFont: {
+    fontSize: '1.8vmin',
+  },
+  username: {
+    fontWeight: 'bold',
+  },
+  motd: {
+    color: 'teal',
+  },
 });
 
 const MAX_GUESS_LENGTH = 30;
-const SPACING = '\\n\\n\\n\\n\\n\\n\\n';
-const MOTD = 'Welcome to the game!\\nFeel free to chat / make guesses below...\\n';
+const SPACING = '\n \n \n \n \n \n \n';
+const MOTD = '&motd(Welcome to the game!)\n&motd(Feel free to chat / make guesses below...)\n\t\n';
 const DEFAULT_TEXT = SPACING + MOTD;
 
 class Chat extends Component {
@@ -54,7 +61,7 @@ class Chat extends Component {
           let chatTextNew = DEFAULT_TEXT;
           Client.state.guesses.forEach(guessObj => {
             if (!Client.state.mutedUsers.includes(guessObj.userID)) {
-              chatTextNew += '\\n' + guessObj.username.toUpperCase() + ": " + guessObj.guess;
+              chatTextNew += '\n&b(' + guessObj.username.toUpperCase() + "): " + guessObj.guess;
             }  
           });
 
@@ -76,6 +83,45 @@ class Chat extends Component {
     document.getElementById('chatarea').scrollTop = document.getElementById('chatarea').scrollHeight;
   }
 
+  renderChat() {
+    const { classes } = this.props;
+    const chatLines = this.state.chatText.split('\n');
+    let items = [];
+    let key = 0;
+
+    chatLines.forEach(line => {
+      let nameMatch = line.match(/^&b\(([^()]*)\)(.*)$/);
+      let motdMatch = line.match(/^&motd\(([^()]*)\)$/);
+      if (nameMatch) {
+        let namePart = nameMatch[1];
+        let messagePart = nameMatch[2];
+        items.push(
+          <Typography key={key++} variant='body2' className={classes.chatFont}>
+            <span className={classes.username}>{namePart}</span>
+            <span>{messagePart}</span>
+          </Typography>
+        );
+      } else if (motdMatch) {
+        let motdLine = motdMatch[1];
+        items.push(
+          <Typography key={key++} variant='body2' className={classes.chatFont}>
+            <span className={classes.motd}>{motdLine}</span>
+          </Typography>
+        );
+      } else {
+        items.push(
+          <Typography key={key++} variant='body2' className={classes.chatFont}>
+            {line}
+          </Typography>
+        );
+      }  
+    });
+
+    return (
+      items
+    );
+  }
+  
   render() {
     const { classes } = this.props;
     return (
@@ -83,15 +129,9 @@ class Chat extends Component {
         <Paper className={classes.chatContainer}>
           <Grid container className={classes.chatContent}>  
             <Grid item xs={12} className={classes.chatTextContainer}>
-              <TextField
-                id='chatarea'
-                className={classes.chatText}
-                disabled
-                multiline
-                fullWidth
-                value={this.state.chatText.replace(/\\n/g, '\n')}
-                rows={7}
-              />
+              <div id='chatarea' className={classes.chatText}>
+                {this.renderChat()}
+              </div>  
             </Grid>
             <Grid item xs={12} className={classes.chatFieldContainer}>
               <Divider/>

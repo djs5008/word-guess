@@ -8,6 +8,7 @@ const classes = theme => ({
   content: {
     padding: 5,
     overflowY: 'auto',
+    overflowX: 'hidden',
     height: '100%',
   },
   iconAlign: {

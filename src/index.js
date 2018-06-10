@@ -90,14 +90,16 @@ class App extends Component {
             if (gameID !== null) {
               // Join currently active game
               this.startLoading(false, 'Joining game...');
-              Client.state.activeLobby = gameID;
-              Client.joinLobby(gameID, null, (status) => {
-                if (status) {
-                  this.showGameLobby();
-                } else {
-                  this.showMenu();
-                }
-              })
+              Client.leaveLobby(() => {
+                Client.state.activeLobby = gameID;
+                Client.joinLobby(gameID, null, (status) => {
+                  if (status) {
+                    this.showGameLobby();
+                  } else {
+                    this.showMenu();
+                  }
+                });
+              });
             } else {              
               this.showMenu();
             }

@@ -8,7 +8,7 @@ const createjs = window.createjs;
 const classes = theme => ({
   canvas: {
     boxShadow: '0px 1px 5px 0px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 3px 1px -2px rgba(0, 0, 0, 0.12)',
-    cursor: 'pointer',
+    cursor: 'url(img/pencil.png),auto', // Icon made by Situ Herrera (situ-herrera) from www.flaticon.com is licensed by Creative Commons BY 3.0
   },
 });
 
@@ -17,11 +17,9 @@ class Canvas extends Component {
   constructor(props) {
     super(props);
     this.vars = {
-      color: 'white',
-      size: 5,
-      drawing: true,
       penDown: false,
       hue: 0,
+      lastDrawTick: 0,
     };
   }
 
@@ -68,7 +66,6 @@ class Canvas extends Component {
 
   fitStage() {
     this.stage.canvas.height = 0;
-    // this.stage.canvas.width = 0;
     let divHeight = document.getElementById('canvasContainer').clientHeight;
     let divWidth = parseFloat(window.getComputedStyle(document.getElementById('canvasContainer')).width);
     this.stage.canvas.height = divHeight;
@@ -76,6 +73,7 @@ class Canvas extends Component {
     this.buffer.uncache();
     this.buffer.cache(0, 0, this.stage.canvas.width, this.stage.canvas.height);
     this.fillBackground();
+    this.drawAllLines();
   }
 
   registerMouseEvents() {
@@ -101,14 +99,17 @@ class Canvas extends Component {
   }
 
   handleMouseMove() {
-    if (this.vars.drawing && this.vars.penDown) {
-      let pos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
-      this.drawLine(pos);
-      this.oldX = pos.x;
-      this.oldY = pos.y;
+    if (Client.state.drawOptions.drawing && this.vars.penDown) {
+      if ((Date.now() - this.vars.lastDrawTick) >= 10) {
+        let pos = this.getPercentPos({ x: this.stage.mouseX, y: this.stage.mouseY });
+        this.drawLine(pos);
+        this.oldX = pos.x;
+        this.oldY = pos.y;
+        this.vars.lastDrawTick = Date.now();
+      }
     } else {
       let percentMousePos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
-      Client.sendMouse(percentMousePos.x, percentMousePos.y, this.vars.color, this.vars.size);
+      Client.sendMouse(percentMousePos.x, percentMousePos.y, Client.state.drawOptions.color, Client.state.drawOptions.size);
     }
   }
 
@@ -120,8 +121,8 @@ class Canvas extends Component {
 
   drawLine(pos) {
     let line = {
-      color: this.vars.color, 
-      size: this.vars.size, 
+      color: Client.state.drawOptions.color, 
+      size: Client.state.drawOptions.size, 
       oldX: this.oldX, 
       oldY: this.oldY, 
       x: pos.x, 
@@ -129,17 +130,24 @@ class Canvas extends Component {
     };
     Client.addToLines(line);
     Client.sendLine(line);
-    this.vars.hue = this.vars.hue < 355 ? this.vars.hue + 5 : 0;
-    this.vars.color = createjs.Graphics.getHSL(this.vars.hue, 100, 50);
+    
+    if (Client.state.drawOptions.rainbow) {
+      this.vars.hue = this.vars.hue < 355 ? this.vars.hue + 5 : 0;
+      Client.state.drawOptions.color = createjs.Graphics.getHSL(this.vars.hue, 100, 50);
+    }
+  }
+
+  drawAllLines() {
+    Client.state.lineBuffer = Client.state.allLines.concat(Client.state.lineBuffer);
   }
 
   paint() {
 
     this.cursorLayer.graphics.clear();
     this.cursorLayer.graphics
-      .beginFill(this.vars.color)
+      .beginFill(Client.state.drawOptions.color)
       .moveTo(this.stage.mouseX, this.stage.mouseY)
-      .drawCircle(this.stage.mouseX, this.stage.mouseY, this.vars.size/2)
+      .drawCircle(this.stage.mouseX, this.stage.mouseY, Client.state.drawOptions.size/2)
       .endFill();
     Object.keys(Client.state.mousePos).forEach(userID => {
       let mousePos = Client.state.mousePos[userID];
@@ -169,6 +177,11 @@ class Canvas extends Component {
 
       this.buffer.updateCache('source-over');
       this.drawArea.graphics.clear();
+    }
+
+    if (Client.state.drawOptions.clear) {
+      this.buffer.updateCache();
+      Client.state.drawOptions.clear = false;
     }
     
     this.stage.update();
