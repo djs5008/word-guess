@@ -6,6 +6,7 @@ import Canvas from './canvas';
 import Chat from './chat';
 import ConnectedBar from './connectedbar'
 import CanvasControls from './canvas-controls';
+import GameStatus from './game-status';
 
 const styles = theme => ({
   root: {
@@ -100,8 +101,9 @@ class Game extends Component {
           >
             <Grid className={classes.canvasGridContainer} item xs={12}>
               <Slide in={this.state.shown} direction='down' >
-                <div id='canvasContainer' className={classes.canvasContainer}>  
+                <div id='canvasContainer' className={classes.canvasContainer}>
                   <Canvas />
+                  <GameStatus />
                   <CanvasControls />
                 </div>
               </Slide>
