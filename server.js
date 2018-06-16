@@ -628,6 +628,7 @@ function startNewRound(lobbyID) {
         let socket = io.sockets.connected[user.socketID];
         if (socket != null) {
           socket.emit('gameover', winner.username);
+          user.score = 0;
         }
       });
     }
