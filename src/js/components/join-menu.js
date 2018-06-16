@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { List, ListItem, Typography, Modal, Divider, Grid, Grow } from '@material-ui/core';
 import Lobby from './lobby';
-import * as Client from './client';
 
-const styles = theme => ({
+const classes = theme => ({
   paper: {
     width: 'auto',
     backgroundColor: theme.palette.background.paper,
@@ -39,34 +39,13 @@ class JoinMenu extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      lobbies: [],
-      lobbyTimer: undefined,
     };
-    this.closeMenu = this.closeMenu.bind(this);
-    this.joinLobby = this.joinLobby.bind(this);
   }
 
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
     });
-  }
-
-  componentDidMount() {
-    this.setState({
-      lobbyTimer:
-        setInterval(() => {
-          if (this.state.lobbies !== Client.state.lobbies) {
-            this.setState({
-              lobbies: Client.state.lobbies,
-            });
-          }
-        }, 50),
-    });
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.state.lobbyTimer);
   }
 
   closeMenu() {
@@ -77,28 +56,19 @@ class JoinMenu extends Component {
     this.props.showMenu();
   }
 
-  joinLobby(lobbyID, password) {
-    this.props.startLoading(true, 'Joining game...');
-    Client.joinLobby(lobbyID, password, (status) => {
-      if (status) {
-        this.props.showGameLobby();
-      } else {
-        this.props.showJoinLobby();
-      }
-    });
-  }
-
   getAvailableLobbies() {
     const { classes } = this.props;
     let items = [];
-    if (Object.keys(this.state.lobbies).length > 0) {
-      Object.keys(this.state.lobbies).forEach(lobbyID => {
-        let lobby = this.state.lobbies[lobbyID];
+    if (Object.keys(this.props.lobbies).length > 0) {
+      Object.keys(this.props.lobbies).forEach(lobbyID => {
+        let lobby = this.props.lobbies[lobbyID];
         items.push(
           <ListItem key={lobbyID} className={classes.lobby}>
             <Lobby 
               closeMenu={this.closeMenu}
-              joinLobby={this.joinLobby}
+              showGameLobby={this.props.showGameLobby}
+              showJoinLobby={this.props.showJoinLobby}
+              startLoading={this.props.startLoading}
               lobbyID={lobbyID}
               lobbyName={lobby.lobbyName}
               maxPlayers={lobby.maxPlayers}
@@ -163,4 +133,10 @@ class JoinMenu extends Component {
   }
 }
 
-export default withStyles(styles)(JoinMenu);
+const mapStateToProps = (store = {}) => {
+  return {
+    lobbies: store.lobbies,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(JoinMenu));

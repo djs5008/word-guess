@@ -1,7 +1,17 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import ReactDOM from 'react-dom';
 import { withStyles } from '@material-ui/core/styles';
-import * as Client from './client';
+import socket from '../client';
+import {
+  sendMousePos,
+  sendLine,
+  DrawLine,
+  RemoveLine,
+  SetPenColor,
+  ClearCanvas,
+  ResetClear,
+} from '../actions/action';
 
 const createjs = window.createjs;
 
@@ -99,7 +109,8 @@ class Canvas extends Component {
   }
 
   handleMouseMove() {
-    if (Client.state.drawOptions.drawing && this.vars.penDown) {
+    const { dispatch } = this.props;
+    if (this.props.drawOptions.drawing && this.vars.penDown) {
       if ((Date.now() - this.vars.lastDrawTick) >= 10) {
         let pos = this.getPercentPos({ x: this.stage.mouseX, y: this.stage.mouseY });
         this.drawLine(pos);
@@ -108,8 +119,18 @@ class Canvas extends Component {
         this.vars.lastDrawTick = Date.now();
       }
     } else {
-      let percentMousePos = this.getPercentPos({x: this.stage.mouseX, y: this.stage.mouseY});
-      Client.sendMouse(percentMousePos.x, percentMousePos.y, Client.state.drawOptions.color, Client.state.drawOptions.size);
+      if (!this.props.gameState.started
+        || this.props.gameState.activeDrawer === this.props.userID) {
+        let percentMousePos = this.getPercentPos({ x: this.stage.mouseX, y: this.stage.mouseY });
+        dispatch(sendMousePos(
+          socket,
+          this.props.userID,
+          percentMousePos.x,
+          percentMousePos.y,
+          this.props.drawOptions.color,
+          this.props.drawOptions.size,
+        ));
+      }
     }
   }
 
@@ -120,46 +141,59 @@ class Canvas extends Component {
   }
 
   drawLine(pos) {
-    let line = {
-      color: Client.state.drawOptions.color, 
-      size: Client.state.drawOptions.size, 
-      oldX: this.oldX, 
-      oldY: this.oldY, 
-      x: pos.x, 
-      y: pos.y,
-    };
-    Client.addToLines(line);
-    Client.sendLine(line);
+    const { dispatch } = this.props;
+    if (!this.props.gameState.started
+      || this.props.gameState.activeDrawer === this.props.userID) {
+      let line = {
+        color: this.props.drawOptions.color,
+        size: this.props.drawOptions.size,
+        oldX: this.oldX,
+        oldY: this.oldY,
+        x: pos.x,
+        y: pos.y,
+      };
+      dispatch(DrawLine(line));
+      dispatch(sendLine(socket, this.props.userID, line));
     
-    if (Client.state.drawOptions.rainbow) {
-      this.vars.hue = this.vars.hue < 355 ? this.vars.hue + 5 : 0;
-      Client.state.drawOptions.color = createjs.Graphics.getHSL(this.vars.hue, 100, 50);
+      if (this.props.drawOptions.rainbow) {
+        this.vars.hue = this.vars.hue < 355 ? this.vars.hue + 5 : 0;
+        dispatch(SetPenColor(createjs.Graphics.getHSL(this.vars.hue, 100, 50)));
+      }
     }
   }
 
   drawAllLines() {
-    Client.state.lineBuffer = Client.state.allLines.concat(Client.state.lineBuffer);
+    const { dispatch } = this.props;
+    dispatch(ClearCanvas());
+    this.props.allLines.forEach(line => {
+      dispatch(DrawLine(line));
+    });
   }
 
   paint() {
 
+    const { dispatch } = this.props;
+
     this.cursorLayer.graphics.clear();
-    this.cursorLayer.graphics
-      .beginFill(Client.state.drawOptions.color)
-      .moveTo(this.stage.mouseX, this.stage.mouseY)
-      .drawCircle(this.stage.mouseX, this.stage.mouseY, Client.state.drawOptions.size/2)
-      .endFill();
-    Object.keys(Client.state.mousePos).forEach(userID => {
-      let mousePos = Client.state.mousePos[userID];
+    if (!this.props.gameState.started
+      || this.props.gameState.activeDrawer === this.props.userID) {
+      this.cursorLayer.graphics
+        .beginFill(this.props.drawOptions.color)
+        .moveTo(this.stage.mouseX, this.stage.mouseY)
+        .drawCircle(this.stage.mouseX, this.stage.mouseY, this.props.drawOptions.size / 2)
+        .endFill();
+    }
+    Object.keys(this.props.mousePos).forEach(userID => {
+      let mousePos = this.props.mousePos[userID];
       this.cursorLayer.graphics
         .beginFill(mousePos.color)
         .drawCircle(this.stage.canvas.width * mousePos.x, this.stage.canvas.height * mousePos.y, mousePos.size/2)
         .endFill();
     });
 
-    let lineBuffer = Client.getLines();
-    if (lineBuffer.length > 0) {
-      lineBuffer.forEach(line => {
+    let lines = this.props.lineBuffer;
+    if (lines.length > 0) {
+      lines.forEach(line => {
         let oldX = this.stage.canvas.width * line.oldX;
         let oldY = this.stage.canvas.height * line.oldY;
         let x = this.stage.canvas.width * line.x;
@@ -172,22 +206,23 @@ class Canvas extends Component {
           .lineTo(x, y)
           .endStroke();
 
-        Client.removeLine(line);
+        dispatch(RemoveLine(line));
       });
 
       this.buffer.updateCache('source-over');
       this.drawArea.graphics.clear();
     }
 
-    if (Client.state.drawOptions.clear) {
+    if (this.props.drawOptions.clear) {
       this.buffer.updateCache();
-      Client.state.drawOptions.clear = false;
+      dispatch(ResetClear());
     }
     
     this.stage.update();
   }
 
   render() {
+    //console.log('rendered canvas: ' + Date.now());
     const { classes } = this.props;
     return (
       <canvas ref="canvas" className={classes.canvas}>
@@ -197,4 +232,15 @@ class Canvas extends Component {
   }
 }
 
-export default withStyles(classes)(Canvas);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+    drawOptions: store.drawOptions,
+    gameState: store.gameState,
+    lineBuffer: store.lineBuffer,
+    allLines: store.allLines,
+    mousePos: store.mousePos,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(Canvas));

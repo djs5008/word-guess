@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
-import * as Client from './client';
 import { Paper, Slide, TextField, Divider, Grid, Typography } from '@material-ui/core';
+import socket from '../client';
+import {
+  sendGuess,
+} from '../actions/action';
 
 const classes = theme => ({
   chatContainer: {
@@ -29,6 +33,9 @@ const classes = theme => ({
   motd: {
     color: 'teal',
   },
+  correct: {
+    color: 'lightgreen',
+  },
 });
 
 const MAX_GUESS_LENGTH = 30;
@@ -48,9 +55,10 @@ class Chat extends Component {
   }
 
   submitGuess() {
+    const { dispatch } = this.props;
     let guessField = document.getElementById('guessfield');
     let guess = guessField.value;
-    Client.sendGuess(guess);
+    dispatch(sendGuess(socket, this.props.userID, guess));
     guessField.value = '';
   }
 
@@ -59,10 +67,14 @@ class Chat extends Component {
       chatTimer:
         setInterval(() => {
           let chatTextNew = DEFAULT_TEXT;
-          Client.state.guesses.forEach(guessObj => {
-            if (!Client.state.mutedUsers.includes(guessObj.userID)) {
-              chatTextNew += '\n&b(' + guessObj.username.toUpperCase() + "): " + guessObj.guess;
-            }  
+          this.props.guesses.forEach(guessObj => {
+            if (!guessObj.notification) {
+              if (!this.props.mutedUsers.includes(guessObj.userID)) {
+                chatTextNew += '\n&b(' + guessObj.username.toUpperCase() + "): " + guessObj.guess;
+              }
+            } else {
+              chatTextNew += '\n' + guessObj.guess;
+            }
           });
 
           if (this.state.chatText !== chatTextNew) {
@@ -92,6 +104,7 @@ class Chat extends Component {
     chatLines.forEach(line => {
       let nameMatch = line.match(/^&b\(([^()]*)\)(.*)$/);
       let motdMatch = line.match(/^&motd\(([^()]*)\)$/);
+      let correctMatch = line.match(/^&g\(([^()]*)\)$/);
       if (nameMatch) {
         let namePart = nameMatch[1];
         let messagePart = nameMatch[2];
@@ -106,6 +119,13 @@ class Chat extends Component {
         items.push(
           <Typography key={key++} variant='body2' className={classes.chatFont}>
             <span className={classes.motd}>{motdLine}</span>
+          </Typography>
+        );
+      } else if (correctMatch) {
+        let correctLine = correctMatch[1];
+        items.push(
+          <Typography key={key++} variant='body2' className={classes.chatFont}>
+            <span className={classes.correct}>{correctLine}</span>
           </Typography>
         );
       } else {
@@ -160,4 +180,12 @@ class Chat extends Component {
   }
 }
 
-export default withStyles(classes)(Chat);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+    guesses: store.guesses,
+    mutedUsers: store.mutedUsers,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(Chat));

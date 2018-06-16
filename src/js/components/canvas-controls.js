@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
-import * as Client from './client';
 import { Grid, Button, Icon, Tooltip, Zoom, Paper } from '@material-ui/core';
 import FiberManualRecord from '@material-ui/icons/FiberManualRecord';
+import socket from '../client';
+import {
+  SetPenColor,
+  SetPenSize,
+  sendClearCanvas,
+} from '../actions/action';
 
 const classes = theme => ({
   root: {
@@ -14,9 +20,7 @@ const classes = theme => ({
     margin: 5,
     pointerEvents: 'auto',
   },
-  controlPopup: {
-    // opacity: 0.5,
-  },
+  controlPopup: {},
   canvasControls: {
     maxWidth: 200,
     position: 'absolute',
@@ -48,6 +52,8 @@ class CanvasControls extends Component {
     this.state = {
       colorOpen: false,
       sizeOpen: false,
+      hidden: false,
+      drawOptions: {},
     };
   }
 
@@ -66,17 +72,19 @@ class CanvasControls extends Component {
   }
   
   setPenColor(color) {
+    const { dispatch } = this.props;
     if (color !== '#rainbow') {
-      Client.state.drawOptions.rainbow = false;
-      Client.state.drawOptions.color = color;
+      // Client.state.drawOptions.rainbow = false;
+      dispatch(SetPenColor(color));
     } else {
-      Client.state.drawOptions.rainbow = true;
+      // Client.state.drawOptions.rainbow = true;
     }
     this.toggleColorPalette();
   }
 
   setPenSize(size) {
-    Client.state.drawOptions.size = size;
+    const { dispatch } = this.props;
+    dispatch(SetPenSize(size));
     this.togglePenSize();
   }
 
@@ -126,7 +134,7 @@ class CanvasControls extends Component {
             onClick={() => this.setPenSize(size)}
             className={classes.controlButton}
           >
-            <FiberManualRecord nativeColor={Client.state.drawOptions.color} style={{ width: size*2, height: size*2,}}/>
+            <FiberManualRecord nativeColor={this.props.drawOptions.color} style={{ width: size*2, height: size*2,}}/>
           </Button>
         </Grid>
       );
@@ -137,10 +145,10 @@ class CanvasControls extends Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, dispatch } = this.props;
 
     return (
-      <div className={classes.root}>
+      <div className={classes.root} hidden={this.props.hidden}>
         <Grid container justify='center' align='center' alignContent='center' alignItems='center' className={classes.controlWrapper}>
           <Grid item xs={12} hidden={!this.state.sizeOpen} className={classes.controlPopup}>
             <Zoom in={this.state.sizeOpen} >
@@ -189,7 +197,7 @@ class CanvasControls extends Component {
                   className={classes.controlButton}
                   variant='fab'
                   mini
-                  onClick={Client.clearCanvas}
+                  onClick={() => dispatch(sendClearCanvas(socket, this.props.userID))}
                 >
                   <Icon>layers_clear</Icon>
                 </Button>
@@ -203,4 +211,12 @@ class CanvasControls extends Component {
 
 }
 
-export default withStyles(classes)(CanvasControls);
+const mapStateToProps = (store = {}) => {
+  return {
+    hidden: (store.gameState.started && (store.gameState.activeDrawer !== store.userID)),
+    drawOptions: store.drawOptions,
+    userID: store.userID,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(CanvasControls));

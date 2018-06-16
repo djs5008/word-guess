@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { Slide, Grid } from '@material-ui/core';
-import * as Client from './client';
 import Canvas from './canvas';
 import Chat from './chat';
 import ConnectedBar from './connectedbar'
 import CanvasControls from './canvas-controls';
 import GameStatus from './game-status';
 
-const styles = theme => ({
+const classes = theme => ({
   root: {
     width: '100%',
     height: '95%',
@@ -45,8 +45,8 @@ class Game extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      lobbyID: Client.state.activeLobby,
       created: props.created,
+      lobbyMaintainer: undefined,
     };
   }
 
@@ -57,17 +57,18 @@ class Game extends Component {
     });
   }
 
-  leaveGame() {
-    setTimeout(() => {
-      this.props.startLoading(false, 'Leaving game...');
-      Client.leaveLobby(() => {
-        this.props.showMenu();
-      });
-    }, 0);
+  componentWillMount() {
+    this.setState({
+      lobbyMaintainer: setInterval(() => {
+        if (this.props.activeLobby == null) {
+          this.props.showMenu();
+        }
+      }, 1),
+    });
   }
 
-  startGame() {
-
+  componentWillUnmount() {
+    clearInterval(this.state.lobbyMaintainer);
   }
 
   render() {
@@ -86,8 +87,7 @@ class Game extends Component {
         <Grid item xs={2}>
           <ConnectedBar
             showMenu={this.props.showMenu}
-            startGame={this.startGame.bind(this)}
-            leaveGame={this.leaveGame.bind(this)}
+            startLoading={this.props.startLoading}
           />  
         </Grid>
         <Grid item xs={10} style={{paddingBottom: 0}}>
@@ -118,7 +118,13 @@ class Game extends Component {
       </Grid>
     );
   }
-
 }
 
-export default withStyles(styles)(Game);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+    activeLobby: store.activeLobby,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(Game));

@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Paper, Button, Icon, Slide, TextField, Grid } from '@material-ui/core';
-import * as Client from './client';
+import socket from '../client';
+import {
+  sendJoinLobby,
+} from '../actions/action';
 
-const styles = theme => ({
+const classes = theme => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
@@ -62,7 +66,7 @@ class Lobby extends Component {
   isButtonDisabled() {
     return this.isLobbyFull() 
       || (this.state.privateLobby && this.state.typing && this.state.password === '')
-      || (this.props.bannedUsers.includes(Client.state.userID));
+      || (this.props.bannedUsers.includes(this.props.userID));
   }
 
   isTyping() {
@@ -86,6 +90,18 @@ class Lobby extends Component {
     });
   }
 
+  joinLobby(lobbyID, password) {
+    const { dispatch } = this.props;
+    this.props.startLoading(true, 'Joining game...');
+    dispatch(sendJoinLobby(socket, this.props.userID, lobbyID, password, (status) => {
+      if (status) {
+        this.props.showGameLobby();
+      } else {
+        this.props.showJoinLobby();
+      }
+    }));
+  }
+
   handleButtonDown() {
     this.setState({
       buttonDown: true,
@@ -94,7 +110,7 @@ class Lobby extends Component {
     if (this.state.privateLobby && !this.state.typing) {
       setTimeout(() => this.password.focus(), 0);
     } else {
-      this.props.joinLobby(this.state.lobbyID, this.state.password);
+      this.joinLobby(this.state.lobbyID, this.state.password);
     }
   }
 
@@ -195,4 +211,10 @@ class Lobby extends Component {
 
 }
 
-export default withStyles(styles)(Lobby);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(Lobby));

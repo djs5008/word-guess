@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Modal, TextField, Button, Checkbox, Divider, Grid, Grow, Tooltip } from '@material-ui/core';
-import * as Client from './client';
+import socket from '../client';
+import {
+  sendCreateLobby,
+  sendJoinLobby,
+} from '../actions/action';
 
-const styles = theme => ({
+const classes = theme => ({
   paper: {
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
@@ -76,8 +81,11 @@ class CreateMenu extends Component {
   }
 
   createLobby() {
+    const { dispatch } = this.props;
     this.props.startLoading(true, 'Setting up lobby...');
-    Client.createLobby(
+    dispatch(sendCreateLobby(
+      socket,
+      this.props.userID,
       this.state.lobbyName,
       this.state.maxPlayers,
       this.state.rounds,
@@ -85,14 +93,15 @@ class CreateMenu extends Component {
       this.state.password,
       (lobbyID) => {
         this.props.startLoading(true, 'Joining game...');
-        Client.joinLobby(lobbyID, this.state.password, (status) => {
+        dispatch(sendJoinLobby(socket, this.props.userID, lobbyID, this.state.password, (status) => {
           if (status) {
             this.props.showGameLobby();
           } else {
             this.props.showMenu();
           }
-        });
-    });
+        }));
+      }
+    ));
   }
 
   render() {
@@ -240,4 +249,10 @@ class CreateMenu extends Component {
   }
 }
 
-export default withStyles(styles)(CreateMenu);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(CreateMenu));

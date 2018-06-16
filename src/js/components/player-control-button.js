@@ -1,11 +1,23 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { ListItem, Button, Avatar, Hidden, Typography, Collapse, ListItemText, List, Divider, Grid, Slide, ListItemIcon, Icon } from '@material-ui/core';
-import * as Client from './client';
+import socket from '../client';
+import {
+  sendKickUser,
+  sendBanUser,
+  MuteUser,
+  UnmuteUser,
+} from '../actions/action';
 
-const styles = theme => ({
+const classes = theme => ({
   avatar: {
-    marginRight: 10,
+  },
+  activeAvatar: {
+    backgroundColor: 'lightblue',
+  },
+  correctAvatar: {
+    backgroundColor: 'lightgreen',
   },
   playerButtonContainer: {
     width: '100%',
@@ -40,29 +52,34 @@ class PlayerControlButton extends Component {
       id: props.id,
       playerInfo: props.playerInfo,
       created: props.created,
+      active: props.active,
       open: false,
+      guessedCorrectly: props.guessedCorrectly,
     };
   }
 
   kickUser() {
-    Client.kickUser(this.state.playerInfo.userID, (userID) => {
+    const { dispatch } = this.props;
+    dispatch(sendKickUser(socket, this.props.userID, this.state.playerInfo.userID, (userID) => {
       console.log('kicked user: ' + this.state.playerInfo.username);
-    });
+    }));
     this.props.setControlOpen(-1);
   }
 
   banUser() {
-    Client.banUser(this.state.playerInfo.userID, (userID) => {
+    const { dispatch } = this.props;
+    dispatch(sendBanUser(socket, this.props.userID, this.state.playerInfo.userID, (userID) => {
       console.log('banned user: ' + this.state.playerInfo.username);
-    });
+    }));
     this.props.setControlOpen(-1);
   }
 
   toggleMute() {
-    if (Client.state.mutedUsers.includes(this.state.playerInfo.userID)) {
-      Client.unmuteUser(this.state.playerInfo.userID);
+    const { dispatch } = this.props;
+    if (this.props.mutedUsers.includes(this.state.playerInfo.userID)) {
+      dispatch(UnmuteUser(this.state.playerInfo.userID));
     } else {
-      Client.muteUser(this.state.playerInfo.userID);
+      dispatch(MuteUser(this.state.playerInfo.userID));
     }
   }
 
@@ -74,19 +91,19 @@ class PlayerControlButton extends Component {
     items.push(
       <ListItem key={1} button className={classes.nestedItem}>
         <ListItemIcon>
-          <Icon>{Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'speaker_notes' : 'speaker_notes_off'}</Icon>
+          <Icon>{this.props.mutedUsers.includes(this.state.playerInfo.userID) ? 'speaker_notes' : 'speaker_notes_off'}</Icon>
         </ListItemIcon>
         <Hidden smDown>
           <ListItemText
             className={classes.controlOption}
-            primary={Client.state.mutedUsers.includes(this.state.playerInfo.userID) ? 'Unmute' : 'Mute'}
+            primary={this.props.mutedUsers.includes(this.state.playerInfo.userID) ? 'Unmute' : 'Mute'}
             onClick={this.toggleMute.bind(this)}
           />
         </Hidden>  
       </ListItem>
     );
 
-    if (this.state.created) {
+    if (this.props.createdLobby) {
       items.push(
         <ListItem key={2} button className={classes.nestedItem}>
           <ListItemIcon>
@@ -130,6 +147,8 @@ class PlayerControlButton extends Component {
     this.setState({
       created: props.created,
       open: props.open,
+      active: props.active,
+      guessedCorrectly: props.guessedCorrectly,
     })
   }
 
@@ -146,18 +165,25 @@ class PlayerControlButton extends Component {
                   color='default'
                   variant='flat'
                   fullWidth
-                  disabled={this.state.playerInfo.userID === Client.state.userID}
+                  disabled={this.state.playerInfo.userID === this.props.userID}
                   onClick={evt => this.props.setControlOpen(this.state.id)}
                 >
-                  <Grid container justify='center' alignContent='center' alignItems='center'>
-                    <Grid item xs={4}>
-                      <Avatar className={classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
+                  <Grid container justify='center' align='center' alignContent='center' alignItems='center'>
+                    <Grid item xs={12} md={4}>
+                      <Avatar className={this.state.active ? classes.activeAvatar : (this.state.guessedCorrectly) ? classes.correctAvatar : classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
                     </Grid>
-                    <Grid item xs={6}>
-                      <Hidden smDown>
+                    <Hidden smDown>
+                      <Grid item xs={12} md={6}>
                         <Typography variant='body2' color='textSecondary' align='left'>{this.state.playerInfo.username}</Typography>
-                      </Hidden>
-                    </Grid>
+                        <Typography variant='body2' color='textSecondary' align='left'>Score: {this.state.playerInfo.score}</Typography>
+                      </Grid>
+                    </Hidden>
+                    <Hidden mdUp>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant='body2' color='textSecondary' align='center'>{this.state.playerInfo.username}</Typography>
+                        <Typography variant='body2' color='textSecondary' align='center'>Score: {this.state.playerInfo.score}</Typography>
+                      </Grid>
+                    </Hidden>
                   </Grid>
                 </Button>
               </ListItem>
@@ -172,4 +198,12 @@ class PlayerControlButton extends Component {
   }
 }
 
-export default withStyles(styles)(PlayerControlButton);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+    mutedUsers: store.mutedUsers,
+    createdLobby: store.createdLobby,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(PlayerControlButton));

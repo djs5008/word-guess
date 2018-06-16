@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Grid, Grow, CircularProgress, Button } from '@material-ui/core';
 
-const styles = theme => ({
+const classes = theme => ({
   text: {
     textAlign: 'center',
     color: 'white',
@@ -96,4 +97,9 @@ class Loading extends Component {
   }
 }
 
-export default withStyles(styles)(Loading);
+const mapStateToProps = (store = {}) => {
+  return {
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(Loading));

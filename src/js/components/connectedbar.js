@@ -1,8 +1,13 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { List, Typography, Divider, Button, Icon, Slide, Paper, Hidden } from '@material-ui/core';
-import * as Client from './client'
 import PlayerControlButton from './player-control-button';
+import socket from '../client';
+import {
+  sendLeaveLobby,
+  startGame,
+} from '../actions/action';
 
 const classes = theme => ({
   content: {
@@ -47,10 +52,9 @@ class ConnectedBar extends Component {
     super(props);
     this.state = {
       shown: true,
-      playerMaintainer: undefined,
-      players: [],
       openControl: -1,
-      created: false,
+      activeDrawer: undefined,
+      correctUsers: [],
     };
     this.setControlOpen = this.setControlOpen.bind(this);
   }
@@ -72,16 +76,17 @@ class ConnectedBar extends Component {
   getConnectedPlayers() {
     let items = [];
     let id = 0;
-    this.state.players.forEach(playerInfo => {
+    this.props.players.forEach(playerInfo => {
       items.push(
         <PlayerControlButton 
           id={id} 
           key={playerInfo.username + id} 
           playerInfo={playerInfo} 
-          created={this.state.created} 
           open={this.state.openControl === id}
           setControlOpen={this.setControlOpen}
           showMenu={this.props.showMenu}
+          active={this.props.activeDrawer === playerInfo.userID}
+          guessedCorrectly={this.props.correctUsers.includes(playerInfo.userID)}
         />
       );
       id++;
@@ -97,14 +102,14 @@ class ConnectedBar extends Component {
     const { classes } = this.props;
     let result = null;
 
-    if (this.state.created) {
+    if (this.props.createdLobby && this.props.activeDrawer === undefined) {
       result = (
         <Button
           className={classes.controlButton}
           variant='raised'
           color='primary'
           fullWidth
-          onClick={this.props.startGame}
+          onClick={this.startGame.bind(this)}
         >
           <Hidden xsDown>
             <Typography variant='button' color='textSecondary'>Start&nbsp;</Typography>
@@ -117,26 +122,19 @@ class ConnectedBar extends Component {
     return (result);
   }
 
-  componentDidMount() {
-    this.setState({
-      playerMaintainer: setInterval(() => {
-        if (Client.state.activeLobby !== undefined) {
-          if (JSON.stringify(this.state.players) !== JSON.stringify(Client.state.players)
-            || this.state.created !== Client.state.createdLobby) {
-            this.setState({
-              players: Client.state.players,
-              created: Client.state.createdLobby,
-            });
-          }
-        } else {
-          this.props.showMenu();
-        }
-      }, 100),
-    });
+  leaveGame() {
+    const { dispatch } = this.props;
+    setTimeout(() => {
+      this.props.startLoading(false, 'Leaving game...');
+      dispatch(sendLeaveLobby(socket, this.props.userID, () => {
+        this.props.showMenu();
+      }));
+    }, 0);
   }
 
-  componentWillUnmount() {
-    clearTimeout(this.state.playerMaintainer);
+  startGame() {
+    const { dispatch } = this.props;
+    dispatch(startGame(socket, this.props.userID, this.props.activeLobby));
   }
 
   render() {
@@ -163,7 +161,7 @@ class ConnectedBar extends Component {
               variant='raised'
               color='secondary'
               fullWidth
-              onClick={this.props.leaveGame}
+              onClick={this.leaveGame.bind(this)}
             >
               <Icon className={classes.iconAlign}>meeting_room</Icon>
               <Hidden xsDown>
@@ -177,4 +175,15 @@ class ConnectedBar extends Component {
   }
 }
 
-export default withStyles(classes)(ConnectedBar);
+const mapStateToProps = (store = {}) => {
+  return {
+    userID: store.userID,
+    activeLobby: store.activeLobby,
+    createdLobby: store.createdLobby,
+    players: store.players,
+    activeDrawer: store.gameState.activeDrawer,
+    correctUsers: store.gameState.correctUsers,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(ConnectedBar));

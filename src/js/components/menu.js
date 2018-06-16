@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
-import * as Client from './client';
+import {
+  
+} from '../actions/action';
 
-const styles = theme => ({
+const classes = theme => ({
   button: {
     margin: '5px 10px 5px 10px',
     padding: '25px 50px 25px 50px',
@@ -62,7 +65,8 @@ class MainMenu extends Component {
     });
   }
 
-  stopSnackbar() {
+  stopSnackbar(evt, reason) {
+    if (reason === 'clickaway') return;
     this.setState({
       shownName: false,
     });
@@ -147,15 +151,15 @@ class MainMenu extends Component {
           }}
           open={this.props.username !== null && this.state.shownName}
           autoHideDuration={6000}
-          onClose={(evt) => this.stopSnackbar()}
-          onExit={(evt) => this.stopSnackbar()}
+          onClose={this.stopSnackbar.bind(this)}
+          onExit={this.stopSnackbar.bind(this)}
           message={
             <div>
               <Typography variant='body2' className={classes.createButton}>
-                Signed in as '{Client.state.username}'!
+                Signed in as '{this.props.username}'!
               </Typography>
               <Typography variant='caption'>
-                user id: {Client.state.userID}
+                user id: {this.props.userID}
               </Typography>
             </div>
           }
@@ -183,4 +187,11 @@ class MainMenu extends Component {
   }
 }
 
-export default withStyles(styles)(MainMenu);
+const mapStateToProps = (store = {}) => {
+  return {
+    username: store.username,
+    userID: store.userID,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(MainMenu));

@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
-import * as Client from './client';
-import { Paper, Typography } from '@material-ui/core';
+import { Paper, Typography, Hidden } from '@material-ui/core';
+import {
+  
+} from '../actions/action';
 
 const classes = theme => ({
   root: {
@@ -75,12 +78,7 @@ class GameStatus extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {
-      gameStarted: true,
-      round: 0,
-      currentWord: 'loading...',
-      timeLeft: 90,
-    };
+    this.state = {};
   }
 
   getStatusText() {
@@ -89,8 +87,8 @@ class GameStatus extends Component {
     let items = [];
     let key = 0;
 
-    if (this.state.gameStarted) {
-      text = 'Word:\nExample Word';
+    if (this.props.gameStarted) {
+      text = 'Word:\n' + this.props.currentWord;
     } else {
       text = 'Game Starting Soon';
     }
@@ -115,8 +113,8 @@ class GameStatus extends Component {
     const { classes } = this.props;
     let text = undefined;
 
-    if (this.state.gameStarted) {
-      text = 'Round: ' + this.state.round;
+    if (this.props.gameStarted) {
+      text = 'Round: ' + this.props.round;
     }
 
     return (
@@ -128,23 +126,24 @@ class GameStatus extends Component {
 
   getRoundTimer() {
     const { classes } = this.props;
-    let text = undefined;
 
-    if (this.state.gameStarted) {
-      text = 'Time Left: ' + this.state.timeLeft;
-    }
+    let gbColor = (255 * (this.props.timeLeft / 45));
+    gbColor = (gbColor > 255) ? 255 : gbColor;
 
     return (
       <Typography variant='body2' className={classes.roundTimerText} align='center'>
-        {text}
+        <Hidden xsDown>
+          <span>Time Left: </span>
+        </Hidden>
+        <span style={{color: 'rgb(255,' + gbColor + ',' + gbColor + ')'}}>{this.props.timeLeft}</span>
       </Typography>
     );
   }
 
   render() {
     const { classes } = this.props;
-    const gameRoundTransform = (this.state.gameStarted) ? 'translateX(-95%)' : null;
-    const roundTimerTransform = (this.state.gameStarted) ? 'translateX(95%)' : null;
+    const gameRoundTransform = (this.props.gameStarted) ? 'translateX(-95%)' : null;
+    const roundTimerTransform = (this.props.gameStarted) ? 'translateX(95%)' : null;
 
     return (
       <div id='game-status' className={classes.root}>
@@ -169,4 +168,13 @@ class GameStatus extends Component {
 
 }
 
-export default withStyles(classes)(GameStatus);
+const mapStateToProps = (store = {}) => {
+  return {
+    gameStarted: store.gameState.started,
+    currentWord: store.gameState.currentWord,
+    round: store.gameState.round,
+    timeLeft: store.gameState.timeLeft,
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(GameStatus));

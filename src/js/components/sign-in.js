@@ -1,9 +1,13 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Modal, TextField, Tooltip, Button, Grid, Grow } from '@material-ui/core';
-import * as Client from './client';
+import socket from '../client';
+import {
+  sendRegister,
+} from '../actions/action';
 
-const styles = theme => ({
+const classes = theme => ({
   paper: {
     width: 'auto',
     backgroundColor: theme.palette.background.paper,
@@ -38,10 +42,11 @@ class SignIn extends Component {
   }
   
   setSignedIn(status) {
+    const { dispatch } = this.props;
     this.props.startLoading(false, 'Welcome ' + this.state.username + '!\nSigning in...');
-    Client.register(this.state.username, () => {
+    dispatch(sendRegister(socket, this.state.username, () => {
       this.props.showMenu();
-    });
+    }));
   }
 
   checkValidUsername() {
@@ -123,4 +128,9 @@ class SignIn extends Component {
   }
 }
 
-export default withStyles(styles)(SignIn);
+const mapStateToProps = (store = {}) => {
+  return {
+  }
+}
+
+export default withStyles(classes)(connect(mapStateToProps)(SignIn));

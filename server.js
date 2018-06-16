@@ -1,14 +1,15 @@
 const io = require('socket.io')();
 const uuid = require('uuid/v4');
+const http = require('http');
 const port = 3001;
 
-const REGISTER_DELAY = 750;
-const CREATE_DELAY = 1000;
-const JOIN_DELAY = 1000;
+const REGISTER_DELAY = 500;
+const CREATE_DELAY = 500;
+const JOIN_DELAY = 500;
 const LEAVE_DELAY = 500;
 const RETRIEVE_GAME_DELAY = 100;
-const LOBBY_DISPATCH_INTERVAL = 500;
-const PLAYER_DISPATCH_INTERVAL = 250;
+const DEFAULT_WORD_TIME = 90;
+const NEW_WORD_DELAY = 5000;
 
 let users = {};
 class SessionData {
@@ -16,7 +17,8 @@ class SessionData {
     this.socketID = socketID;
     this.username = username;
     this.connectedGame = undefined;
-    this.lobbyDispatcher = undefined;
+    this.score = 0;
+    this.guessedCorrectly = false;
   }
 
   joinGame(gameID) {
@@ -26,10 +28,15 @@ class SessionData {
   leaveGame() {
     this.connectedGame = undefined;
   }
+
+  setScore(score) {
+    this.score = score;
+}
 }
 
 let lobbies = {};
 let lobbyPasswords = {};
+let wordTimers = {};
 class LobbyData {
   constructor(creatorID, lobbyName, maxPlayers, rounds, privateLobby) {
     this.creatorID = creatorID;
@@ -41,6 +48,9 @@ class LobbyData {
     this.bannedUsers = [];
     this.gameState = {
       currentDrawer: undefined,
+      activeWord: undefined,
+      timeLeft: -1,
+      round: 0,
       scores: {},
       lines: [],
     };
@@ -64,9 +74,12 @@ function getConnectedUsernames(lobbyID) {
   let result = [];
   if (lobby != null) {
     lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
       result.push({
-        username: users[userID].username,
+        username: user.username,
         userID: userID,
+        score: user.score,
+        guessedCorrectly: user.guessedCorrectly,
       });
     });
   }
@@ -87,29 +100,28 @@ function getUserID(socketID) {
 }
 
 function registerUser(socket, username, userID) {
+  if (userID != null) {
   setTimeout(() => {
     if (users[userID] === undefined || users[userID] === null) {
       users[userID] = new SessionData(socket.id, username);
     }
 
-    // Setup lobby dispatcher interval
-    users[userID].lobbyDispatcher = setInterval(() => {
-      socket.emit('lobbies', lobbies);
-    }, LOBBY_DISPATCH_INTERVAL);
-
     // Setup new socket ID (refreshes each page visit)
     users[userID].socketID = socket.id;
     
+    // Broadcast new list of lobbies to users
+    socket.emit('lobbies', lobbies);
+  
     // Alert client of successful registration
     socket.emit('registered');
     console.log('User: \'' + username + '\'(' + userID + ') Registered!');
   }, REGISTER_DELAY);
 }
+}
 
 function unregisterUser(socket, userID, disconnect) {
   let sessionData = users[userID];
   if (sessionData != null) {
-    clearInterval(sessionData.lobbyDispatcher);
     if (disconnect) {
       console.log('User: \'' + sessionData.username + '\'(' + userID + ') Disconnected!');
     } else {
@@ -124,6 +136,16 @@ function checkRegistration(socket, userID) {
   socket.emit('registration_check', (sessionData != null));
 }
 
+function broadcastLobbies() {
+  Object.keys(users).forEach(userID => {
+    let user = users[userID];
+    let userSocket = io.sockets.connected[user.socketID];
+    if (userSocket != null) {
+      userSocket.emit('lobbies', lobbies);
+    }
+  });
+}
+
 function createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby, password) {
   let sessionData = users[userID];
   if (sessionData != null) {
@@ -133,6 +155,10 @@ function createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby
       lobbyPasswords[lobbyID] = password;
       socket.emit('lobbycreated', lobbyID);
       console.log('Lobby Created: ' + lobbyID);
+
+      // Broadcast new list of lobbies to users
+      broadcastLobbies();
+
     }, CREATE_DELAY);
   }
 }
@@ -167,6 +193,9 @@ function joinGame(socket, userID, lobbyID, password) {
               });
 
               console.log('User \'' + sessionData.username + '\'(' + userID + ') Joined Lobby: ' + lobbyID);
+
+              // Broadcast new list of lobbies to users
+              broadcastLobbies();
             }, JOIN_DELAY);
           } else {
             setTimeout(() => {
@@ -216,6 +245,9 @@ function leaveGame(socket, userID, disconnect) {
           sessionData.leaveGame();
           console.log('User \'' + sessionData.username + '\'(' + userID + ') Left Lobby: ' + sessionData.connectedGame);
         }
+
+        // Broadcast new list of lobbies to users
+        broadcastLobbies();
       }, LEAVE_DELAY);
     }
   }
@@ -278,6 +310,10 @@ function echoLine(userID, line) {
     let lobby = lobbies[user.connectedGame];
     if (lobby != null) {
 
+      // Ensure they can draw at the time
+      if (!lobby.gameState.started
+        || lobby.gameState.currentDrawer === userID) {
+
       // Stores lines on in lobby data
       // Limit amount of lines
       const MAX_LINES = 5000;
@@ -298,6 +334,7 @@ function echoLine(userID, line) {
       });
     }
   }
+}
 }
 
 function echoClear(userID) {
@@ -342,20 +379,38 @@ function makeGuess(userID, guess) {
       if (user != null) {
         let lobby = lobbies[user.connectedGame];
         if (lobby != null) {
-          lobby.connectedUsers.forEach(playerID => {
-            let player = users[playerID];
-            let socket = io.sockets.connected[player.socketID];
-            if (socket != null) {
-              socket.emit('guess', userID, user.username, guess);
+
+          // Broadcast guess or correct guess to all users
+          if (guess === lobby.gameState.activeWord) {
+            if (!user.guessedCorrectly) {
+              user.guessedCorrectly = true;
+              user.setScore(user.score + lobby.gameState.timeLeft);
+              let drawer = users[lobby.gameState.currentDrawer];
+              drawer.setScore(drawer.score + (lobby.gameState.timeLeft / (lobby.connectedUsers.length - 1)));
+              lobby.connectedUsers.forEach(playerID => {
+                let player = users[playerID];
+                let playerSocket = io.sockets.connected[player.socketID];
+                if (playerSocket != null) {
+                  playerSocket.emit('correctguess', userID, user.username);
+                }
+              });
             }
-          });
+          } else {
+            lobby.connectedUsers.forEach(playerID => {
+              let player = users[playerID];
+              let playerSocket = io.sockets.connected[player.socketID];
+              if (playerSocket != null) {
+                playerSocket.emit('guess', userID, user.username, guess);
+              }
+            });
+          }
         }
       }
     }  
   }  
 }
 
-function requestLines(userID) {
+function requestGameInfo(userID) {
   let user = users[userID];
   if (user != null) {
     let lobby = lobbies[user.connectedGame];
@@ -365,7 +420,216 @@ function requestLines(userID) {
         lobby.gameState.lines.forEach(line => {
           socket.emit('line', line);
         });
+        if (lobby.gameState.started) {
+          socket.emit('gamestart');
+          socket.emit('drawer', lobby.gameState.currentDrawer);
+          socket.emit('newround', lobby.gameState.round);
+          sendTimeLeft(user.connectedGame);
+          sendCurrentWord(user.connectedGame, false);
+        }
       }
+    }
+  }
+}
+
+function retrieveWord(cb) {
+  var options = {
+    host: 'lab46.g7n.org',
+    path: '/~dschmitt/wordgen.php?count=1'
+  };
+  var request = http.request(options, function (res) {
+      var data = '';
+      res.on('data', function (chunk) {
+          data += chunk;
+      });
+      res.on('end', function () {
+        cb(data);
+      });
+  });
+  request.on('error', function (e) {
+    console.log(e.message);
+  });
+  request.end();
+}
+
+function startGame(masterID, lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    if (lobby.creatorID === masterID) {
+      lobby.gameState.currentDrawer = lobby.connectedUsers[Math.floor(Math.random() * lobby.connectedUsers.length)];
+
+      if (!lobby.gameState.started) {
+        lobby.connectedUsers.forEach(userID => {
+          let user = users[userID];
+          let socket = io.sockets.connected[user.socketID];
+          if (socket != null) {
+            socket.emit('gamestart');
+          }
+        });
+        lobby.gameState.started = true;
+      }
+
+      startNewRound(lobbyID);
+      nextDrawer(lobbyID);
+    }
+  }
+}
+
+function nextDrawer(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    // Clear correct guessers
+    lobby.connectedUsers.forEach(userID => {
+      users[userID].guessedCorrectly = false;
+    });
+
+    // Set next drawer
+    let currentDrawerIndex = lobby.connectedUsers.indexOf(lobby.gameState.currentDrawer);
+    let newDrawerIndex = currentDrawerIndex;
+    if (currentDrawerIndex === lobby.connectedUsers.length - 1) {
+      newDrawerIndex = 0;
+      startNewRound(lobbyID);
+    } else {
+      newDrawerIndex = newDrawerIndex + 1;
+    }
+    lobby.gameState.currentDrawer = lobby.connectedUsers[newDrawerIndex];
+    users[lobby.gameState.currentDrawer].guessedCorrectly = true;
+    
+    if (lobby.gameState.started) {
+      
+      // Dispatch new word
+      getNewWord(lobbyID, () => {
+        lobby.gameState.timeLeft = DEFAULT_WORD_TIME;
+        
+        lobby.connectedUsers.forEach(userID => {
+          let user = users[userID];
+          let socket = io.sockets.connected[user.socketID];
+          if (socket != null) {
+            socket.emit('drawer', lobby.gameState.currentDrawer);
+          }
+        });
+
+        sendCurrentWord(lobbyID, false);
+
+        // Clear drawing
+        echoClear(lobby.creatorID);
+  
+        // Dispatch game state information
+        sendTimeLeft(lobbyID);
+        wordTimers[lobbyID] = setInterval(() => {
+          let correctGuessers = [];
+          lobby.connectedUsers.forEach(userID => {
+            let user = users[userID];
+            if (userID !== lobby.gameState.currentDrawer) {
+              if (user.guessedCorrectly) {
+                correctGuessers.push(userID);
+              }
+            }
+          });
+  
+          if (correctGuessers.length === (lobby.connectedUsers.length - 1)) {
+            clearInterval(wordTimers[lobbyID]);
+            sendCurrentWord(lobbyID, true);
+            setTimeout(() => {
+              nextDrawer(lobbyID);
+            }, NEW_WORD_DELAY);
+          } else {
+            if (lobby.gameState.timeLeft > 0) {
+              lobby.gameState.timeLeft -= 1;
+              sendTimeLeft(lobbyID);
+            } else {
+              clearInterval(wordTimers[lobbyID]);
+              sendCurrentWord(lobbyID, true);
+              setTimeout(() => {
+                nextDrawer(lobbyID);
+              }, NEW_WORD_DELAY);
+            }
+          }
+        }, 1000);
+      });
+    } else {
+      clearInterval(wordTimers[lobbyID]);
+    }
+  }
+}
+
+function getNewWord(lobbyID, cb) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    clearInterval(wordTimers[lobbyID]);
+    // Wait for server to retrieve word
+    retrieveWord((word) => {
+      if (lobby.gameState.started) {
+        lobby.gameState.activeWord = word;
+        cb();
+      }
+    });
+  }
+}
+
+function sendCurrentWord(lobbyID, force) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    let word = lobby.gameState.activeWord;
+    lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
+      let socket = io.sockets.connected[user.socketID];
+      if (socket != null) {
+        let parsedWord = (lobby.gameState.currentDrawer === userID || force)
+          ? word
+          : word.replace(/[ ]/g, '  ').replace(/[-]/g, '-').replace(/[^ -]/g, '_ ');
+        socket.emit('word', parsedWord);
+      }
+    });
+  }
+}
+
+function sendTimeLeft(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    // send new time to clients
+    lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
+      let socket = io.sockets.connected[user.socketID];
+      if (socket != null) {
+        socket.emit('timeLeft', lobby.gameState.timeLeft);
+      }
+    });
+  }
+}
+
+function startNewRound(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    if (lobby.gameState.round < lobby.rounds) {
+      lobby.gameState.round += 1;
+      lobby.connectedUsers.forEach(userID => {
+        let user = users[userID];
+        let socket = io.sockets.connected[user.socketID];
+        if (socket != null) {
+          socket.emit('newround', lobby.gameState.round);
+        }
+      });
+    } else {
+      let winner = undefined;
+      lobby.gameState.started = false;
+      lobby.gameState.activeWord = undefined;
+      lobby.gameState.round = 0;
+      lobby.gameState.timeLeft = 90;
+      lobby.gameState.currentDrawer = undefined;
+      lobby.connectedUsers.forEach(userID => {
+        let user = users[userID];
+        if (winner === undefined || user.score > winner.score) {
+          winner = user;
+        }
+      });
+      lobby.connectedUsers.forEach(userID => {
+        let user = users[userID];
+        let socket = io.sockets.connected[user.socketID];
+        if (socket != null) {
+          socket.emit('gameover', winner.username);
+        }
+      });
     }
   }
 }
@@ -386,7 +650,8 @@ io.on('connection', (socket) => {
   socket.on('clearCanvas', (userID) => echoClear(userID));
   socket.on('mousePos', (userID, mouseInfo) => echoMouses(userID, mouseInfo));
   socket.on('guess', (userID, guess) => makeGuess(userID, guess));
-  socket.on('requestLines', (userID) => requestLines(userID))
+  socket.on('requestGameInfo', (userID) => requestGameInfo(userID));
+  socket.on('startgame', (userID, lobbyID) => startGame(userID, lobbyID));
 
   socket.on('disconnect', () => {
     leaveGame(socket, getUserID(socket.id), true);
