@@ -126,6 +126,12 @@ export const ReceiveNewRound = (round) => ({
   round: round,
 });
 
+export const UpdateScore = (data) => ({
+  type: 'UPDATE_SCORE',
+  userID: data.userID,
+  score: data.score,
+});
+
 export const Disconnect = (data) => ({
   type: 'DISCONNECT',
 });
@@ -349,6 +355,14 @@ export const getKick = (socket) => {
       dispatch(sendLeaveLobby(socket, userID, () => {
         console.log('kicked reason: ' + reason);
       }));
+    });
+  };
+};
+
+export const getScoreUpdate = (socket) => {
+  return (dispatch) => {
+    socket.on('score', (userID, score) => {
+      dispatch(UpdateScore({ userID, score }));
     });
   };
 };

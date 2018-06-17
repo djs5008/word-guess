@@ -54,7 +54,6 @@ class PlayerControlButton extends Component {
       created: props.created,
       active: props.active,
       open: false,
-      guessedCorrectly: props.guessedCorrectly,
     };
   }
 
@@ -170,18 +169,18 @@ class PlayerControlButton extends Component {
                 >
                   <Grid container justify='center' align='center' alignContent='center' alignItems='center'>
                     <Grid item xs={12} md={4}>
-                      <Avatar className={this.state.active ? classes.activeAvatar : (this.state.guessedCorrectly) ? classes.correctAvatar : classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
+                      <Avatar className={this.state.active ? classes.activeAvatar : (this.props.correctUsers.includes(this.state.playerInfo.userID)) ? classes.correctAvatar : classes.avatar}>{this.state.playerInfo.username.split('')[0]}</Avatar>
                     </Grid>
                     <Hidden smDown>
                       <Grid item xs={12} md={6}>
                         <Typography variant='body2' color='textSecondary' align='left'>{this.state.playerInfo.username}</Typography>
-                        <Typography variant='body2' color='textSecondary' align='left'>Score: {this.state.playerInfo.score}</Typography>
+                        <Typography variant='body2' color='textSecondary' align='left'>Score: {this.props.scores[this.state.playerInfo.userID]}</Typography>
                       </Grid>
                     </Hidden>
                     <Hidden mdUp>
                       <Grid item xs={12} md={6}>
                         <Typography variant='body2' color='textSecondary' align='center'>{this.state.playerInfo.username}</Typography>
-                        <Typography variant='body2' color='textSecondary' align='center'>Score: {this.state.playerInfo.score}</Typography>
+                        <Typography variant='body2' color='textSecondary' align='center'>Score: {this.props.scores[this.state.playerInfo.userID]}</Typography>
                       </Grid>
                     </Hidden>
                   </Grid>
@@ -203,6 +202,8 @@ const mapStateToProps = (store = {}) => {
     userID: store.userID,
     mutedUsers: store.mutedUsers,
     createdLobby: store.createdLobby,
+    correctUsers: store.gameState.correctUsers,
+    scores: store.gameState.scores,
   }
 }
 

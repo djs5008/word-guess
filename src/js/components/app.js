@@ -29,12 +29,13 @@ import {
   getLobbyList,
   getMousePos,
   getPlayerList,
+  getScoreUpdate,
 } from '../actions/action';
 
 const MAX_LOADING_TIME = 5000;
 
 const classes = theme => ({
-  
+
 });
 
 class App extends Component {
@@ -62,6 +63,7 @@ class App extends Component {
     dispatch(getClearCanvas(socket));
     dispatch(getKick(socket));
     dispatch(getGameInfo(socket));
+    dispatch(getScoreUpdate(socket));
 
     this.showMenu = this.showMenu.bind(this);
     this.signOut = this.signOut.bind(this);

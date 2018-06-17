@@ -78,8 +78,6 @@ function getConnectedUsernames(lobbyID) {
       result.push({
         username: user.username,
         userID: userID,
-        score: user.score,
-        guessedCorrectly: user.guessedCorrectly,
       });
     });
   }
@@ -144,6 +142,22 @@ function broadcastLobbies() {
       userSocket.emit('lobbies', lobbies);
     }
   });
+}
+
+function broadcastScores(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
+      let userSocket = io.sockets.connected[user.socketID];
+      if (userSocket != null) {
+        lobby.connectedUsers.forEach(playerID => {
+          let player = users[playerID];
+          userSocket.emit('score', playerID, player.score);
+        });
+      }
+    });
+  }
 }
 
 function createLobby(socket, userID, lobbyName, maxPlayers, rounds, privateLobby, password) {
@@ -387,6 +401,9 @@ function makeGuess(userID, guess) {
               user.setScore(user.score + lobby.gameState.timeLeft);
               let drawer = users[lobby.gameState.currentDrawer];
               drawer.setScore(drawer.score + (lobby.gameState.timeLeft / (lobby.connectedUsers.length - 1)));
+
+              broadcastScores(user.connectedGame);
+
               lobby.connectedUsers.forEach(playerID => {
                 let player = users[playerID];
                 let playerSocket = io.sockets.connected[player.socketID];
@@ -427,6 +444,7 @@ function requestGameInfo(userID) {
           sendTimeLeft(user.connectedGame);
           sendCurrentWord(user.connectedGame, false);
         }
+        broadcastScores(user.connectedGame);
       }
     }
   }
@@ -631,6 +649,7 @@ function startNewRound(lobbyID) {
           user.score = 0;
         }
       });
+      broadcastScores(lobbyID);
     }
   }
 }

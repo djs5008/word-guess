@@ -53,8 +53,6 @@ class ConnectedBar extends Component {
     this.state = {
       shown: true,
       openControl: -1,
-      activeDrawer: undefined,
-      correctUsers: [],
     };
     this.setControlOpen = this.setControlOpen.bind(this);
   }
@@ -86,7 +84,6 @@ class ConnectedBar extends Component {
           setControlOpen={this.setControlOpen}
           showMenu={this.props.showMenu}
           active={this.props.activeDrawer === playerInfo.userID}
-          guessedCorrectly={this.props.correctUsers.includes(playerInfo.userID)}
         />
       );
       id++;
@@ -182,7 +179,6 @@ const mapStateToProps = (store = {}) => {
     createdLobby: store.createdLobby,
     players: store.players,
     activeDrawer: store.gameState.activeDrawer,
-    correctUsers: store.gameState.correctUsers,
   }
 }
 

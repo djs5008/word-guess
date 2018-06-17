@@ -25,6 +25,7 @@ const INIT_STATE = {
     timeLeft: 90,
     round: 0,
     correctUsers: [],
+    scores: {},
   }
 };
 
@@ -209,6 +210,17 @@ const reducer = (state = INIT_STATE, action) => {
         gameState: {
           ...state.gameState,
           round: action.round,
+        },
+      };
+    case 'UPDATE_SCORE':
+      return {
+        ...state,
+        gameState: {
+          ...state.gameState,
+          scores: {
+            ...state.gameState.scores,
+            [action.userID]: action.score,
+          },
         },
       };
     case 'DISCONNECT':
