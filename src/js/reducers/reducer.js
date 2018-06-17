@@ -224,6 +224,10 @@ const reducer = (state = INIT_STATE, action) => {
           ...state.gameState,
           round: action.round,
         },
+        guesses: [...state.guesses, {
+          notification: true,
+          guess: '----[ Round ' + (action.round) + ' ]----',
+        }],
       };
     case 'UPDATE_SCORE':
       return {
