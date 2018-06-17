@@ -90,7 +90,11 @@ class GameStatus extends Component {
     if (this.props.gameStarted) {
       text = 'Word:\n' + this.props.currentWord;
     } else {
-      text = 'Game Starting Soon';
+      if (this.props.winner) {
+        text = 'Winner:\n' + this.props.winner;
+      } else {
+        text = 'Game Starting Soon';
+      }
     }
     
     text.split('\n').forEach(line => {
@@ -174,6 +178,7 @@ const mapStateToProps = (store = {}) => {
     currentWord: store.gameState.currentWord,
     round: store.gameState.round,
     timeLeft: store.gameState.timeLeft,
+    winner: store.gameState.winner,
   }
 }
 

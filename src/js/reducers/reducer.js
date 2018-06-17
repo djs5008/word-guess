@@ -21,6 +21,7 @@ const INIT_STATE = {
   gameState: {
     started: false,
     activeDrawer: undefined,
+    winner: undefined,
     currentWord: 'Loading...',
     timeLeft: 90,
     round: 0,
@@ -166,7 +167,10 @@ const reducer = (state = INIT_STATE, action) => {
       return {
         ...state,
         correctUsers: INIT_STATE.correctUsers,
-        gameState: INIT_STATE.gameState,
+        gameState: {
+          ...INIT_STATE.gameState,
+          winner: action.winner,
+        },
       };
     case 'CORRECT_GUESS':
       return {
