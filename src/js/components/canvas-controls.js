@@ -7,6 +7,7 @@ import socket from '../client';
 import {
   SetPenColor,
   SetPenSize,
+  SetRainbowPen,
   sendClearCanvas,
 } from '../actions/action';
 
@@ -73,11 +74,10 @@ class CanvasControls extends Component {
   
   setPenColor(color) {
     const { dispatch } = this.props;
-    if (color !== '#rainbow') {
-      // Client.state.drawOptions.rainbow = false;
-      dispatch(SetPenColor(color));
+    if (color === '#rainbow') {
+      dispatch(SetRainbowPen(true));
     } else {
-      // Client.state.drawOptions.rainbow = true;
+      dispatch(SetPenColor(color));
     }
     this.toggleColorPalette();
   }

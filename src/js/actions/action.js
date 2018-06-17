@@ -66,6 +66,11 @@ export const SetPenSize = (size) => ({
   size: size,
 });
 
+export const SetRainbowPen = (rainbow) => ({
+  type: 'SET_RAINBOW_PEN',
+  rainbow: rainbow,
+});
+
 export const ClearCanvas = (data) => ({
   type: 'CLEAR_CANVAS',
 });

@@ -122,6 +122,14 @@ const reducer = (state = INIT_STATE, action) => {
           size: action.size,
         },
       };
+    case 'SET_RAINBOW_PEN':
+      return {
+        ...state,
+        drawOptions: {
+          ...state.drawOptions,
+          rainbow: action.rainbow,
+        },
+      };
     case 'CLEAR_CANVAS':
       return {
         ...state,
