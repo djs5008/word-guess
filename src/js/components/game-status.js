@@ -53,6 +53,7 @@ const classes = theme => ({
     position: 'relative',
     top: '50%',
     transform: 'translateY(-50%)',
+    whiteSpace: 'pre-wrap',
   },
   roundText: {
     color: 'white',
