@@ -221,8 +221,11 @@ class Canvas extends Component {
     this.stage.update();
   }
 
+  shouldComponentUpdate() {
+    return false;
+  }
+
   render() {
-    //console.log('rendered canvas: ' + Date.now());
     const { classes } = this.props;
     return (
       <canvas ref="canvas" className={classes.canvas}>

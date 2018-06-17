@@ -134,7 +134,7 @@ class App extends Component {
             if (gameID !== null) {
               // Join currently active game
               this.startLoading(false, 'Joining game...');
-              dispatch(sendLeaveLobby(socket, this.props.userID, () => {
+              dispatch(sendLeaveLobby(socket, this.props.userID, true, () => {
                 dispatch(sendJoinLobby(socket, this.props.userID, gameID, null, (status) => {
                   if (status) {
                     this.showGameLobby();

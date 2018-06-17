@@ -123,7 +123,7 @@ class ConnectedBar extends Component {
     const { dispatch } = this.props;
     setTimeout(() => {
       this.props.startLoading(false, 'Leaving game...');
-      dispatch(sendLeaveLobby(socket, this.props.userID, () => {
+      dispatch(sendLeaveLobby(socket, this.props.userID, false, () => {
         this.props.showMenu();
       }));
     }, 0);

@@ -78,6 +78,7 @@ class CanvasControls extends Component {
       dispatch(SetRainbowPen(true));
     } else {
       dispatch(SetPenColor(color));
+      dispatch(SetRainbowPen(false));
     }
     this.toggleColorPalette();
   }

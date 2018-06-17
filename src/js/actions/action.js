@@ -267,13 +267,13 @@ export const sendBanUser = (socket, userID, bannedUserID, cb) => {
   }
 };
 
-export const sendLeaveLobby = (socket, userID, cb) => {
+export const sendLeaveLobby = (socket, userID, disconnect, cb) => {
   return (dispatch) => {
     socket.once('left', () => {
       dispatch(LeaveLobby());
       cb();
     });
-    socket.emit('leaving', userID);
+    socket.emit('leaving', userID, disconnect);
   }
 };
 
@@ -357,7 +357,7 @@ export const getClearCanvas = (socket) => {
 export const getKick = (socket) => {
   return (dispatch) => {
     socket.on('kick', (userID, reason) => {
-      dispatch(sendLeaveLobby(socket, userID, () => {
+      dispatch(sendLeaveLobby(socket, userID, false, () => {
         console.log('kicked reason: ' + reason);
       }));
     });
