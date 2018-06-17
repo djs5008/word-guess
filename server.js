@@ -53,6 +53,7 @@ class LobbyData {
       round: 0,
       scores: {},
       lines: [],
+      revealedIndexes: [],
     };
   }
 
@@ -581,6 +582,7 @@ function getNewWord(lobbyID, cb) {
     retrieveWord((word) => {
       if (lobby.gameState.started) {
         lobby.gameState.activeWord = word;
+        lobby.gameState.revealedIndexes = [];
         cb();
       }
     });
@@ -598,6 +600,35 @@ function sendCurrentWord(lobbyID, force) {
         let parsedWord = (lobby.gameState.currentDrawer === userID || user.guessedCorrectly || force)
           ? word
           : word.replace(/[ ]/g, '  ').replace(/[-]/g, '-').replace(/[^ -]/g, '_ ');
+        
+        const setCharAt = (str, index, chr) => {
+          if (index > str.length - 1) return str;
+          return str.substr(0, index) + chr + str.substr(index + 1);
+        };
+        
+        if (!(lobby.gameState.currentDrawer === userID || user.guessedCorrectly || force)) {
+          let timeInterval = Math.floor(DEFAULT_WORD_TIME / (word.length));
+          if (lobby.gameState.timeLeft % timeInterval === 0) {
+            if (lobby.gameState.timeLeft <= (DEFAULT_WORD_TIME - (timeInterval * 2))) {
+              const revealIndex = () => {
+                if (word.length > lobby.gameState.revealedIndexes.length) {
+                  let randIndex = Math.floor(Math.random() * word.length);
+                  if (!lobby.gameState.revealedIndexes.includes(randIndex)) {
+                    lobby.gameState.revealedIndexes.push(randIndex);
+                  } else {
+                    revealIndex();
+                  }
+                }
+              };
+              revealIndex();
+            }
+          }
+          
+          lobby.gameState.revealedIndexes.forEach(index => {
+            parsedWord = setCharAt(parsedWord, (index * 2), word.substr(index, 1));
+          });
+        }
+
         socket.emit('word', parsedWord);
       }
     });
