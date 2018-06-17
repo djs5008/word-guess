@@ -198,6 +198,7 @@ const reducer = (state = INIT_STATE, action) => {
         gameState: {
           ...state.gameState,
           activeDrawer: action.activeDrawer,
+          correctUsers: INIT_STATE.gameState.correctUsers,
         },
       };
     case 'WORD':

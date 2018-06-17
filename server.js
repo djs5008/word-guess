@@ -395,12 +395,12 @@ function makeGuess(userID, guess) {
         if (lobby != null) {
 
           // Broadcast guess or correct guess to all users
-          if (guess === lobby.gameState.activeWord) {
+          if (guess.includes(lobby.gameState.activeWord)) {
             if (!user.guessedCorrectly) {
               user.guessedCorrectly = true;
               user.setScore(user.score + lobby.gameState.timeLeft);
               let drawer = users[lobby.gameState.currentDrawer];
-              drawer.setScore(drawer.score + (lobby.gameState.timeLeft / (lobby.connectedUsers.length - 1)));
+              drawer.setScore(Math.ceil(drawer.score + (lobby.gameState.timeLeft / (lobby.connectedUsers.length - 1))));
 
               broadcastScores(user.connectedGame);
 
@@ -554,6 +554,7 @@ function nextDrawer(lobbyID) {
           } else {
             if (lobby.gameState.timeLeft > 0) {
               lobby.gameState.timeLeft -= 1;
+              sendCurrentWord(lobbyID, false);
               sendTimeLeft(lobbyID);
             } else {
               clearInterval(wordTimers[lobbyID]);
@@ -593,7 +594,7 @@ function sendCurrentWord(lobbyID, force) {
       let user = users[userID];
       let socket = io.sockets.connected[user.socketID];
       if (socket != null) {
-        let parsedWord = (lobby.gameState.currentDrawer === userID || force)
+        let parsedWord = (lobby.gameState.currentDrawer === userID || user.guessedCorrectly || force)
           ? word
           : word.replace(/[ ]/g, '  ').replace(/[-]/g, '-').replace(/[^ -]/g, '_ ');
         socket.emit('word', parsedWord);
