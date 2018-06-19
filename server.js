@@ -453,9 +453,13 @@ function requestGameInfo(userID) {
 }
 
 function retrieveWord(cb) {
+  // var options = {
+  //   host: 'lab46.g7n.org',
+  //   path: '/~dschmitt/wordgen.php?count=1'
+  // };
   var options = {
-    host: 'lab46.g7n.org',
-    path: '/~dschmitt/wordgen.php?count=1'
+    host: 'dank.bot.nu:3000',
+    path: '/word',
   };
   var request = http.request(options, function (res) {
       var data = '';
