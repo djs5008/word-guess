@@ -173,6 +173,13 @@ export const UpdateScore = (data) => ({
   score: data.score,
 });
 
+export const PlaySound = (sound) => {
+  return () => {
+    let audio = new Audio(sound);
+    audio.play();
+  };
+};
+
 export const Disconnect = (data) => ({
   type: 'DISCONNECT',
 });
@@ -409,7 +416,7 @@ export const getScoreUpdate = (socket) => {
 };
 
 export const getGameInfo = (socket) => {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     socket.on('gamestart', () => {
       dispatch(StartGame());
     });
@@ -423,6 +430,12 @@ export const getGameInfo = (socket) => {
       dispatch(ReceiveNewDrawer(activeDrawer));
     });
     socket.on('timeLeft', (timeLeft) => {
+      const state = getState();
+      if (timeLeft <= 3 && timeLeft > 0) {
+        if (state.gameState.activeDrawer === state.userID) {
+          dispatch(PlaySound('/audio/boop.mp3'));
+        }
+      }
       dispatch(ReceiveTimeLeft(timeLeft));
     });
     socket.on('gameover', (winner) => {
