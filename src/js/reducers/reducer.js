@@ -168,6 +168,7 @@ const reducer = (state = INIT_STATE, action) => {
         ...state,
         lineBuffer: [],
         allLines: [],
+        mousePos: {},
         drawOptions: {
           ...state.drawOptions,
           clear: true,
