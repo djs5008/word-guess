@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Typography, Paper, Button, Icon, Slide, TextField, Grid } from '@material-ui/core';
 import socket from '../client';
 import {
-  sendJoinLobby,
+  sendJoinLobby, StartLoading, SetUIState,
 } from '../actions/action';
 
 const classes = theme => ({
@@ -92,13 +92,9 @@ class Lobby extends Component {
 
   joinLobby(lobbyID, password) {
     const { dispatch } = this.props;
-    this.props.startLoading(true, 'Joining game...');
+    dispatch(StartLoading({ text: 'Joining game...', cancellable: true }));
     dispatch(sendJoinLobby(socket, this.props.userID, lobbyID, password, (status) => {
-      if (status) {
-        this.props.showGameLobby();
-      } else {
-        this.props.showJoinLobby();
-      }
+      dispatch(SetUIState((status) ? 'game' : 'joinmenu'));
     }));
   }
 

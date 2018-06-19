@@ -6,6 +6,8 @@ import socket from '../client';
 import {
   sendCreateLobby,
   sendJoinLobby,
+  StartLoading,
+  SetUIState,
 } from '../actions/action';
 
 const classes = theme => ({
@@ -73,16 +75,17 @@ class CreateMenu extends Component {
   }
 
   closeMenu() {
+    const { dispatch } = this.props;
     this.setState({
       shown: false,
       lobbyName:'',
     });
-    this.props.showMenu();
+    dispatch(SetUIState('menu'));
   }
 
   createLobby() {
     const { dispatch } = this.props;
-    this.props.startLoading(true, 'Setting up lobby...');
+    dispatch(StartLoading({ text: 'Setting up lobby...', cancellable: true }));
     dispatch(sendCreateLobby(
       socket,
       this.props.userID,
@@ -92,13 +95,9 @@ class CreateMenu extends Component {
       this.state.private,
       this.state.password,
       (lobbyID) => {
-        this.props.startLoading(true, 'Joining game...');
+        dispatch(StartLoading({ text: 'Joining game...', cancellable: true }));
         dispatch(sendJoinLobby(socket, this.props.userID, lobbyID, this.state.password, (status) => {
-          if (status) {
-            this.props.showGameLobby();
-          } else {
-            this.props.showMenu();
-          }
+          dispatch(SetUIState((status) ? 'game' : 'menu'));
         }));
       }
     ));

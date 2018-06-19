@@ -171,7 +171,6 @@ class Canvas extends Component {
   }
 
   paint() {
-
     const { dispatch } = this.props;
 
     this.cursorLayer.graphics.clear();

@@ -7,6 +7,8 @@ import socket from '../client';
 import {
   sendLeaveLobby,
   startGame,
+  SetUIState,
+  StartLoading,
 } from '../actions/action';
 
 const classes = theme => ({
@@ -82,7 +84,6 @@ class ConnectedBar extends Component {
           playerInfo={playerInfo} 
           open={this.state.openControl === id}
           setControlOpen={this.setControlOpen}
-          showMenu={this.props.showMenu}
           active={this.props.activeDrawer === playerInfo.userID}
         />
       );
@@ -122,9 +123,9 @@ class ConnectedBar extends Component {
   leaveGame() {
     const { dispatch } = this.props;
     setTimeout(() => {
-      this.props.startLoading(false, 'Leaving game...');
+      dispatch(StartLoading({ text: 'Leaving game...', cancellable: false }));
       dispatch(sendLeaveLobby(socket, this.props.userID, false, () => {
-        this.props.showMenu();
+        dispatch(SetUIState('menu'));
       }));
     }, 0);
   }

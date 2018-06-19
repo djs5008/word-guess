@@ -1,7 +1,13 @@
 const INIT_STATE = {
   username: null,
   userID: null,
+  uiState: undefined,
   reconnecting: false,
+  loading: false,
+  loadingText: 'Loading...',
+  loadingCancellable: false,
+  loadingTimer: undefined,
+
   activeLobby: undefined,
   createdLobby: false,
   lobbies: [],
@@ -31,8 +37,35 @@ const INIT_STATE = {
 };
 
 const reducer = (state = INIT_STATE, action) => {
-  // console.log(action.type);
   switch (action.type) {
+    case 'UI_STATE':
+      return {
+        ...state,
+        uiState: action.state,
+      };
+    case 'START_LOADING':
+      return {
+        ...state,
+        loading: true,
+        loadingText: action.loadingText,
+        loadingCancellable: action.loadingCancellable,
+        loadingTimer: action.loadingTimer,
+      };
+    case 'CANCEL_LOADING':
+      if (state.loadingTimer !== undefined) {
+        clearTimeout(state.loadingTimer);
+        return {
+          ...state,
+          loading: false,
+          loadingText: 'Loading...',
+          loadingCancellable: false,
+          loadingTimer: undefined,
+        };
+      } else {
+        return {
+          ...state,
+        };
+      }
     case 'REGISTER':
       return {
         ...state,

@@ -109,7 +109,7 @@ class Chat extends Component {
         let namePart = nameMatch[1];
         let messagePart = nameMatch[2];
         items.push(
-          <Typography key={key++} variant='body2' className={classes.chatFont}>
+          <Typography align='left' key={key++} variant='body2' className={classes.chatFont}>
             <span className={classes.username}>{namePart}</span>
             <span>{messagePart}</span>
           </Typography>
@@ -117,20 +117,20 @@ class Chat extends Component {
       } else if (motdMatch) {
         let motdLine = motdMatch[1];
         items.push(
-          <Typography key={key++} variant='body2' className={classes.chatFont}>
+          <Typography align='left' key={key++} variant='body2' className={classes.chatFont}>
             <span className={classes.motd}>{motdLine}</span>
           </Typography>
         );
       } else if (correctMatch) {
         let correctLine = correctMatch[1];
         items.push(
-          <Typography key={key++} variant='body2' className={classes.chatFont}>
+          <Typography align='left' key={key++} variant='body2' className={classes.chatFont}>
             <span className={classes.correct}>{correctLine}</span>
           </Typography>
         );
       } else {
         items.push(
-          <Typography key={key++} variant='body2' className={classes.chatFont}>
+          <Typography align='left' key={key++} variant='body2' className={classes.chatFont}>
             {line}
           </Typography>
         );

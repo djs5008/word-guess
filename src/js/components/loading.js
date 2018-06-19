@@ -2,6 +2,10 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Grid, Grow, CircularProgress, Button } from '@material-ui/core';
+import {
+  SetUIState,
+  CancelLoading,
+} from '../actions/action';
 
 const classes = theme => ({
   text: {
@@ -18,44 +22,33 @@ class Loading extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: props.loading,
-      loadingText: props.loadingText||'Loading...',
-      cancellable: props.cancellable||true,
       hidden: props.hidden,
     };
   }
 
   componentWillReceiveProps(props) {
     this.setState({
-      loading: props.loading,
-      loadingText: props.loadingText,
-      cancellable: props.cancellable,
       hidden: props.hidden,
     });
   }
 
-  cancelLoading() {
+  cancel() {
+    const { dispatch } = this.props;
     this.setState({
       hidden: true,
-      loading: false,
-      loadingText: 'Loading...',
     });
-    this.props.cancelLoading();
-    this.props.showMenu();
+    dispatch(CancelLoading());
+    dispatch(SetUIState('menu'));
   }
 
   renderCancelButton() {
-    if (this.state.cancellable) {
+    if (this.props.loadingCancellable) {
       return (
         <Button
           color='secondary'
           variant='raised'
           size='small'
-          onClick={
-            (evt) => {
-              this.cancelLoading();
-            }
-          }
+          onClick={this.cancel}
         >cancel</Button>
       );
     }
@@ -77,14 +70,14 @@ class Loading extends Component {
     const { classes } = this.props;
     return (
       <Grid item xs={12} hidden={this.state.hidden}>
-        <Grow in={this.state.loading} timeout={ANIM_GROW_TIME}>
-          <Grid container direction='column' spacing={16} justify='center' alignItems='center' alignContent='center'>
+        <Grow in={this.props.loading} timeout={ANIM_GROW_TIME}>
+          <Grid container direction='column' spacing={16} justify='center' align='center' alignItems='center' alignContent='center'>
             <Grid item xs={12}>
               <CircularProgress className={classes.progress} size={100} />
             </Grid>
             <Grid item xs={12}>
               <Typography variant='title' className={classes.text}>
-                {this.processText(this.state.loadingText)}
+                {this.processText(this.props.loadingText)}
               </Typography>
             </Grid>
             <Grid item xs={12}>
@@ -99,6 +92,9 @@ class Loading extends Component {
 
 const mapStateToProps = (store = {}) => {
   return {
+    loading: store.loading,
+    loadingText: store.loadingText,
+    loadingCancellable: store.loadingCancellable,
   }
 }
 

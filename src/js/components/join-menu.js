@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import { List, ListItem, Typography, Modal, Divider, Grid, Grow } from '@material-ui/core';
 import Lobby from './lobby';
+import { SetUIState } from '../actions/action';
 
 const classes = theme => ({
   paper: {
@@ -49,11 +50,12 @@ class JoinMenu extends Component {
   }
 
   closeMenu() {
+    const { dispatch } = this.props;
     this.setState({
       shown: false,
       lobbyName:'',
     });
-    this.props.showMenu();
+    dispatch(SetUIState('menu'));
   }
 
   getAvailableLobbies() {
@@ -66,9 +68,6 @@ class JoinMenu extends Component {
           <ListItem key={lobbyID} className={classes.lobby}>
             <Lobby 
               closeMenu={this.closeMenu}
-              showGameLobby={this.props.showGameLobby}
-              showJoinLobby={this.props.showJoinLobby}
-              startLoading={this.props.startLoading}
               lobbyID={lobbyID}
               lobbyName={lobby.lobbyName}
               maxPlayers={lobby.maxPlayers}

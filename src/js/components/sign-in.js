@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 import { Typography, Modal, TextField, Tooltip, Button, Grid, Grow } from '@material-ui/core';
 import socket from '../client';
 import {
-  sendRegister,
+  sendRegister, SetUIState, StartLoading,
 } from '../actions/action';
 
 const classes = theme => ({
@@ -43,9 +43,9 @@ class SignIn extends Component {
   
   setSignedIn(status) {
     const { dispatch } = this.props;
-    this.props.startLoading(false, 'Welcome ' + this.state.username + '!\nSigning in...');
+    dispatch(StartLoading({ text: 'Welcome ' + this.state.username + '!\nSigning in...', cancellable: false }));
     dispatch(sendRegister(socket, this.state.username, () => {
-      this.props.showMenu();
+      dispatch(SetUIState('menu'));
     }));
   }
 

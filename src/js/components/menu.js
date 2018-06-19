@@ -2,8 +2,10 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
 import { Typography, Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
-import {
-  
+import socket from '../client';
+import { 
+  SetUIState,
+  sendUnregister
 } from '../actions/action';
 
 const classes = theme => ({
@@ -73,8 +75,14 @@ class MainMenu extends Component {
     this.props.stopSnackbar();
   }
 
+  handleSignout() {
+    const { dispatch } = this.props;
+    dispatch(SetUIState('signin'));
+    dispatch(sendUnregister(socket, this.props.userID));
+  }
+
   render() {
-    const { classes } = this.props;
+    const { classes, dispatch } = this.props;
     return(
       <Grid item xs={12} hidden={this.state.hidden}>
         <div>
@@ -110,7 +118,7 @@ class MainMenu extends Component {
                     className={classes.button}
                     fullWidth
                     size='medium'
-                    onClick={(evt) => this.props.showCreateLobby()}
+                    onClick={(evt) => dispatch(SetUIState('createmenu'))}
                   >
                     <Typography variant='title' className={classes.createButton}>
                       Create Game&nbsp;
@@ -128,7 +136,7 @@ class MainMenu extends Component {
                     className={classes.button}
                     fullWidth
                     size='medium'
-                    onClick={(evt) => this.props.showJoinLobby()}
+                    onClick={(evt) => dispatch(SetUIState('joinmenu'))}
                   >
                     <Typography variant='title' className={classes.joinButton}>
                       Join Game&nbsp;

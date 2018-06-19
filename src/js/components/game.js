@@ -7,6 +7,7 @@ import Chat from './chat';
 import ConnectedBar from './connectedbar'
 import CanvasControls from './canvas-controls';
 import GameStatus from './game-status';
+import { SetUIState } from '../actions/action';
 
 const classes = theme => ({
   root: {
@@ -45,7 +46,6 @@ class Game extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      created: props.created,
       lobbyMaintainer: undefined,
     };
   }
@@ -53,15 +53,15 @@ class Game extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
-      created: props.created,
     });
   }
 
   componentWillMount() {
+    const { dispatch } = this.props;
     this.setState({
       lobbyMaintainer: setInterval(() => {
         if (this.props.activeLobby == null) {
-          this.props.showMenu();
+          dispatch(SetUIState('menu'));
         }
       }, 1),
     });
@@ -85,10 +85,7 @@ class Game extends Component {
         alignItems='stretch'
       >
         <Grid item xs={2}>
-          <ConnectedBar
-            showMenu={this.props.showMenu}
-            startLoading={this.props.startLoading}
-          />  
+          <ConnectedBar />  
         </Grid>
         <Grid item xs={10} style={{paddingBottom: 0}}>
           <Grid

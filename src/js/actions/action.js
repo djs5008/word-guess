@@ -1,5 +1,41 @@
 import uuid from 'uuid/v4';
 
+const MAX_LOADING_TIME = 5000;
+
+const _setUIState = (state) => ({
+  type: 'UI_STATE',
+  state: state,
+});
+
+export const SetUIState = (state) => {
+  return (dispatch) => {
+    dispatch(CancelLoading());
+    dispatch(_setUIState(state));
+  };
+};
+
+const _startLoading = (data) => ({
+  type: 'START_LOADING',
+  loadingText: data.text,
+  loadingCancellable: data.cancellable,
+  loadingTimer: data.loadingTimer,
+});
+
+export const StartLoading = (data) => {
+  return (dispatch) => {
+    dispatch(SetUIState('loading'));
+    data.loadingTimer =
+      setTimeout(() => {
+        dispatch(CancelLoading());
+      }, MAX_LOADING_TIME);
+    dispatch(_startLoading(data));
+  };
+};
+
+export const CancelLoading = (data) => ({
+  type: 'CANCEL_LOADING',
+});
+
 export const Register = (data) => ({
   type: 'REGISTER',
   username: data.username,

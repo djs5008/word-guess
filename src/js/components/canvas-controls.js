@@ -54,7 +54,6 @@ class CanvasControls extends Component {
       colorOpen: false,
       sizeOpen: false,
       hidden: false,
-      drawOptions: {},
     };
   }
 
