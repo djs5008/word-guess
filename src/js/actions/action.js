@@ -360,6 +360,7 @@ export const getGuess = (socket) => {
 export const getCorrectGuess = (socket) => {
   return (dispatch) => {
     socket.on('correctguess', (userID, username) => {
+      dispatch(PlaySound('/audio/ding.mp3'))
       dispatch(ReceiveCorrectGuess({ userID, username }))
     });
   }
@@ -427,6 +428,10 @@ export const getGameInfo = (socket) => {
       dispatch(ReceiveNewWord(currentWord));
     });
     socket.on('drawer', (activeDrawer) => {
+      const state = getState();
+      if (activeDrawer === state.userID) {
+        dispatch(PlaySound('/audio/boop.mp3'));
+      }
       dispatch(ReceiveNewDrawer(activeDrawer));
     });
     socket.on('timeLeft', (timeLeft) => {
