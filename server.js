@@ -54,6 +54,7 @@ class LobbyData {
       scores: {},
       lines: [],
       revealedIndexes: [],
+      drawerCount: 0,
     };
   }
 
@@ -458,7 +459,7 @@ function retrieveWord(cb) {
   //   path: '/~dschmitt/wordgen.php?count=1'
   // };
   var options = {
-    host: 'dank.bot.nu:3000',
+    host: 'dank.bot.nu',
     path: '/word',
   };
   var request = http.request(options, function (res) {
@@ -487,9 +488,11 @@ function startGame(masterID, lobbyID) {
           let user = users[userID];
           let socket = io.sockets.connected[user.socketID];
           if (socket != null) {
+            user.score = 0;
             socket.emit('gamestart');
           }
         });
+        broadcastScores(lobbyID);
         lobby.gameState.started = true;
       }
 
@@ -502,6 +505,7 @@ function startGame(masterID, lobbyID) {
 function nextDrawer(lobbyID) {
   let lobby = lobbies[lobbyID];
   if (lobby != null) {
+    if (lobby.gameState.currentDrawer != null) {
     // Clear correct guessers
     lobby.connectedUsers.forEach(userID => {
       users[userID].guessedCorrectly = false;
@@ -512,12 +516,16 @@ function nextDrawer(lobbyID) {
     let newDrawerIndex = currentDrawerIndex;
     if (currentDrawerIndex === lobby.connectedUsers.length - 1) {
       newDrawerIndex = 0;
-      startNewRound(lobbyID);
     } else {
       newDrawerIndex = newDrawerIndex + 1;
     }
     lobby.gameState.currentDrawer = lobby.connectedUsers[newDrawerIndex];
     users[lobby.gameState.currentDrawer].guessedCorrectly = true;
+    
+      lobby.gameState.drawerCount += 1;
+      if (lobby.gameState.drawerCount >= lobby.connectedUsers.length) {
+        startNewRound(lobbyID);
+      }
     
     if (lobby.gameState.started) {
       
@@ -576,6 +584,7 @@ function nextDrawer(lobbyID) {
       clearInterval(wordTimers[lobbyID]);
     }
   }
+}
 }
 
 function getNewWord(lobbyID, cb) {
@@ -657,6 +666,7 @@ function startNewRound(lobbyID) {
   let lobby = lobbies[lobbyID];
   if (lobby != null) {
     if (lobby.gameState.round < lobby.rounds) {
+      lobby.gameState.drawerCount = 0;
       lobby.gameState.round += 1;
       lobby.connectedUsers.forEach(userID => {
         let user = users[userID];
@@ -666,28 +676,34 @@ function startNewRound(lobbyID) {
         }
       });
     } else {
-      let winner = undefined;
-      lobby.gameState.started = false;
-      lobby.gameState.activeWord = undefined;
-      lobby.gameState.round = 0;
-      lobby.gameState.timeLeft = 90;
-      lobby.gameState.currentDrawer = undefined;
-      lobby.connectedUsers.forEach(userID => {
-        let user = users[userID];
-        if (winner === undefined || user.score > winner.score) {
-          winner = user;
-        }
-      });
-      lobby.connectedUsers.forEach(userID => {
-        let user = users[userID];
-        let socket = io.sockets.connected[user.socketID];
-        if (socket != null) {
-          socket.emit('gameover', winner.username);
-          user.score = 0;
-        }
-      });
-      broadcastScores(lobbyID);
+      endGame(lobbyID);
     }
+  }
+}
+
+function endGame(lobbyID) {
+  let lobby = lobbies[lobbyID];
+  if (lobby != null) {
+    let winner = undefined;
+    lobby.gameState.started = false;
+    lobby.gameState.activeWord = undefined;
+    lobby.gameState.round = 0;
+    lobby.gameState.timeLeft = 90;
+    lobby.gameState.currentDrawer = undefined;
+    lobby.gameState.drawerCount = 0;
+    lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
+      if (winner === undefined || user.score > winner.score) {
+        winner = user;
+      }
+    });
+    lobby.connectedUsers.forEach(userID => {
+      let user = users[userID];
+      let socket = io.sockets.connected[user.socketID];
+      if (socket != null) {
+        socket.emit('gameover', winner.username);
+      }
+    });
   }
 }
 
