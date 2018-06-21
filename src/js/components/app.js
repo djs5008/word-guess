@@ -45,7 +45,6 @@ class App extends Component {
 
     this.state = {
       loadTimer: undefined,
-      shownName: false,
       sessionTimer: undefined,
     };
 
@@ -61,8 +60,6 @@ class App extends Component {
     dispatch(getKick(socket));
     dispatch(getGameInfo(socket));
     dispatch(getScoreUpdate(socket));
-
-    this.stopSnackbar = this.stopSnackbar.bind(this);
   }
 
   componentDidMount() {
@@ -79,14 +76,6 @@ class App extends Component {
         }
       }, 500),
     });
-  }
-
-  stopSnackbar() {
-    setTimeout(() => {      
-      this.setState({
-        shownName: false,
-      })
-    }, 0);
   }
 
   shouldAutoRegister() {
@@ -131,7 +120,6 @@ class App extends Component {
             this.autoRegister();
           } else {
             dispatch(sendUnregister(socket, this.props.userID));
-            dispatch(SetUIState('signin'));
           }
         }
       }));
@@ -175,8 +163,6 @@ class App extends Component {
       <Grid container className='root' justify='center' align='center' alignItems='center' alignContent='center'>
         <MainMenu 
           shown={this.props.uiState === 'menu'}
-          shownName={this.state.shownName}
-          stopSnackbar={this.stopSnackbar}
           hidden={['loading', 'signin', 'game', undefined].includes(this.props.uiState)}
         />
         {this.getCurrentState()}

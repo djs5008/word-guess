@@ -226,6 +226,7 @@ export const sendRegister = (socket, username, cb) => {
 export const sendUnregister = (socket, userID) => {
   return (dispatch) => {
     dispatch(Unregister());
+    dispatch(SetUIState('signin'));
     socket.emit('unregister', userID);
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('userID');

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux'; 
 import { withStyles } from '@material-ui/core/styles';
-import { Typography, Snackbar, IconButton, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
+import { Typography, Snackbar, Icon, Grid, Slide, Button, Hidden } from '@material-ui/core';
 import socket from '../client';
 import { 
   SetUIState,
@@ -52,7 +52,6 @@ class MainMenu extends Component {
     super(props);
     this.state = {
       shown: props.shown,
-      shownName: props.shownName,
       creating: false,
       joining: false,
       hidden: true,
@@ -62,22 +61,16 @@ class MainMenu extends Component {
   componentWillReceiveProps(props) {
     this.setState({
       shown: props.shown,
-      shownName: props.shownName,
       hidden: props.hidden,
     });
   }
 
   stopSnackbar(evt, reason) {
     if (reason === 'clickaway') return;
-    this.setState({
-      shownName: false,
-    });
-    this.props.stopSnackbar();
   }
 
   handleSignout() {
     const { dispatch } = this.props;
-    dispatch(SetUIState('signin'));
     dispatch(sendUnregister(socket, this.props.userID));
   }
 
@@ -157,8 +150,8 @@ class MainMenu extends Component {
             vertical: 'bottom',
             horizontal: 'center',
           }}
-          open={this.props.username !== null && this.state.shownName}
-          autoHideDuration={6000}
+          open={this.state.shown}
+          autoHideDuration={0}
           onClose={this.stopSnackbar.bind(this)}
           onExit={this.stopSnackbar.bind(this)}
           message={
@@ -172,22 +165,11 @@ class MainMenu extends Component {
             </div>
           }
           action={[
-            <Button key="undo" color="secondary" size="small" onClick={(evt) => this.props.signOut()}>
+            <Button key="undo" color="secondary" size="small" onClick={(evt) => {
+              dispatch(sendUnregister(socket, this.props.userID));
+            }}>
               CHANGE
             </Button>,
-            <IconButton
-              key="close"
-              aria-label="Close"
-              color="inherit"
-              className={classes.close}
-              onClick={(evt) => {
-                this.setState({
-                  shownName: false,
-                });
-              }}
-            >
-              <Icon>close</Icon>
-            </IconButton>,
           ]}
         />
       </Grid>
