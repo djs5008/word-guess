@@ -12,6 +12,9 @@ const classes = theme => ({
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
   },
+  paperContainer: {
+    height: '100%',
+  },
   button: {
     marginTop: 15,
   },
@@ -109,7 +112,7 @@ class JoinMenu extends Component {
         onEscapeKeyDown={this.closeMenu.bind(this)}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center' alignItems='center' style={{pointerEvents: 'none'}}>
+        <Grid container className={classes.paperContainer} justify='center' alignContent='center' alignItems='center' style={{pointerEvents: 'none'}}>
           <Grid item xs={12} sm={6} md={4} lg={3}>
             <Grow in={this.state.shown} timeout={ANIM_GROW_TIME}>
               <div className={classes.paper} style={{pointerEvents: 'auto'}}>

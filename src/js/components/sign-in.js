@@ -14,6 +14,9 @@ const classes = theme => ({
     boxShadow: theme.shadows[5],
     padding: theme.spacing.unit * 4,
   },
+  paperContainer: {
+    height: '100%',
+  },
   button: {
     marginTop: 15,
   },
@@ -62,7 +65,7 @@ class SignIn extends Component {
         open={this.state.shown}
         disableRestoreFocus
       >
-        <Grid container justify='center' alignContent='center' alignItems='center'>
+        <Grid container className={classes.paperContainer} justify='center' alignContent='center' alignItems='center'>
           <Grid item xs={12} sm={6} md={4} lg={3}>
             <Grow in={this.state.shown} timeout={ANIM_GROW_TIME}>
               <div className={classes.paper}>
